@@ -1,6 +1,7 @@
 import os, re, subprocess, urllib, urllib2
 import tmdbsimple as tmdb
 import webbrowser, shutil, requests, time, ssl
+from logger import Logger
 
 
 
@@ -144,15 +145,17 @@ class searchtools(object):
                 for part in lastLog:
                     # Because  [NEW SHOW] is split in half we're only checking for the first part
                     if part == '\t[NEW':
-                        logString = "\n"+logString
+                        logString = "\n\n"+logString
                         break
 
-            l = open(self.logtxt,'a')
-            l.write(logString)
-            l.close()
+            # l = open(self.logtxt,'a')
+            # l.write(logString)
+            # l.close()
+            logger.writeLog(self.logtxt,message=logString)
             print '[-]This show has been deleted'
         else:
             print 'The previous input was invalid.'
+
 
     def showSearch(self):
         showList = self.getList()
@@ -190,6 +193,7 @@ class searchtools(object):
             else:
                 self.likeToAdd(self.show)
                 # print 'o wow'
+                
     def similarStrings(self,rankinglist,otherlist):
         print "hello"
         rankings = self.matchinglist(self.show)
@@ -306,35 +310,35 @@ class searchtools(object):
             else: print '\n\n[!] Error: This show was not found in MovieDB database. Maybe try and re-spell'
 
             
-            # try:
+            try:
             titleChoice = raw_input("\nChoose one of the above options: ")
-            if titleChoice == '1':
-                if self.showExists(show) == False:
-                    self.newDir(show)
+                if titleChoice == '1':
+                    if self.showExists(show) == False:
+                        self.newDir(show)
 
-            elif titleChoice == '2':
-                
-                if self.showExists(self.grammarCheck(show)) == False:
-                    self.newDir(self.grammarCheck(show))
-                else:
-                    print '[!] Error: The show is already in the database'
-                
-            elif titleChoice == '3' and foundshows!= None:
-                if self.showExists(foundshows[0][0]) == False:
-                    self.newDir(foundshows[0][0])
-                else:
-                    print '[!] Error: The show is already in the database'
+                elif titleChoice == '2':
+                    
+                    if self.showExists(self.grammarCheck(show)) == False:
+                        self.newDir(self.grammarCheck(show))
+                    else:
+                        print '[!] Error: The show is already in the database'
+                    
+                elif titleChoice == '3' and foundshows!= None:
+                    if self.showExists(foundshows[0][0]) == False:
+                        self.newDir(foundshows[0][0])
+                    else:
+                        print '[!] Error: The show is already in the database'
 
-            elif titleChoice == 'more' and foundshows != None:
-                if len(foundshows) > 1:
-                    for x in range(len(foundshows)):
-                        print("({})\t{}").format(x+1,foundshows[x][0])
+                elif titleChoice == 'more' and foundshows != None:
+                    if len(foundshows) > 1:
+                        for x in range(len(foundshows)):
+                            print("({})\t{}").format(x+1,foundshows[x][0])
+                    else:
+                        print '[!] Error: There are no more similar shows'
+                
                 else:
-                    print '[!] Error: There are no more similar shows'
-            
-            else:
-                print 'That option is out of range'
-            # except:
+                    print 'That option is out of range'
+            except:
                 # print 'That is not an option'
 
     def showExists(self,something):
@@ -346,6 +350,7 @@ class searchtools(object):
         return os.listdir(self.showsfolder)
 
     def addShowInfo(self,show):
+        logger = Logger()
         global api 
         api = '7e022dc2338ac2988670ddb93ccff401'
         tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
@@ -360,12 +365,13 @@ class searchtools(object):
         if len(search.results) > 0:
             something = search.results[0]
            
-
             overview = something['overview']
-            overviewtext = self.showsfolder+nameshow+"/"+"overview.txt"
-            f = open(overviewtext,'w',)
-            f.write(overview.encode('utf8'))
-            f.close()
+            
+            overviewpath = self.showsfolder+nameshow+"/"+"overview.txt"
+            logger.writeLog(overviewpath, message=overview, overview=True)
+            # f = open(overviewtext,'w',)
+            # f.write(overview.encode('utf-8'))
+            # f.close()
             show_id = (something['id'])
             poster = (something['poster_path'])
             if poster is None:
@@ -414,9 +420,10 @@ class searchtools(object):
                                 logString = "\n"+logString
                                 break
 
-                    l = open(self.logtxt,'a')
-                    l.write(logString)
-                    l.close()
+                    # l = open(self.logtxt,'a')
+                    # l.write(logString)
+                    # l.close()
+                    logger.writeLog(self.logtxt,message=logString)
                     
             else:
                 print '%s path doesn\'t exist' %(show)
@@ -429,28 +436,27 @@ class searchtools(object):
                     os.mkdir(showpath+newSeason)
 
     def addEpisodes(self,show_id,seasonpath,seasonNum):
+        logger = Logger()
         url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,api)
         resp = requests.get(url)
         json_data = requests.get(url).json()
 
         for episode in json_data["episodes"]:
             epnum = episode["episode_number"]
-            epname = episode["name"].encode('utf8')
-            epoverview = episode["overview"].encode('utf8')
+            epname = episode["name"].encode('utf-8')
+            epoverview = episode["overview"].encode('utf-8')
             if epnum<10:
                 epnum = "0"+str(epnum)
             filename = "E{} - {}".format(epnum,epname)
             newepfolder = seasonpath+"/"+filename
+            newoverview = newepfolder+"/overview.txt"
             try:
                 os.mkdir(newepfolder)
-                f = open(newepfolder+"/overview.txt","w")
-                f.write(epoverview)
-                f.close()
+                logger.writeLog(newoverview,message=epoverview,overview=True)
 
             except:
                 LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(filename, newepfolder)
                 print LOG_MESSAGE
-                log = open(showlogfile,'a')
-                log.write(LOG_MESSAGE)
-                log.close()
+                logger.writeLog(showlogfile,message=LOG_MESSAGE)
+ 
                 continue
