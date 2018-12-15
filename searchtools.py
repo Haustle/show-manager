@@ -14,6 +14,7 @@ class searchtools(object):
         self.showtxt = root_folder + "show_list.txt"
         self.bookmarktxt = root_folder + "/shows/[BOOKMARKED SHOWS].txt"
         self.logtxt = root_folder + "log.txt"
+        self.api = '7e022dc2338ac2988670ddb93ccff401'
         
         
     def grammarCheck(self,show):
@@ -53,6 +54,7 @@ class searchtools(object):
         return showName
     
     def showOptions(self,show):
+        logger = Logger()
         print '\n'*4
         print show
         print '-'*10
@@ -62,8 +64,11 @@ class searchtools(object):
         print 'c. Check for missing Episodes'
         print 'd. Bookmark this show'
         print 'e. Delete the show'
-
         whatNext = raw_input("\nChoose one of the above options: ")
+
+
+
+
         if whatNext.lower() == 'a':
             print 'Show Details : \'%s\'' %(show)
             filesInPath = sorted(os.listdir(self.showsfolder+show))
@@ -83,6 +88,10 @@ class searchtools(object):
                 print 'No seasons were found'
 
 
+
+
+
+
         elif whatNext.lower() == 'b':
             print ('Opening {} \'folder\'...'.format(show))       
             subprocess.call(["open","-R", self.showsfolder+show+"/Season 1"])
@@ -99,26 +108,74 @@ class searchtools(object):
             # Allow the user to enter '1-15 and 2-34' so they can download in groups (maybe limit them to 25 at a time)
 
             print 'SHOW UPDATE'
-            print ''
-            print 'a. Check if you have all seasons'
-            print ''
-            seasonUpdate = raw_input("Do you want to see if you have the latest season").lower()
-            if seaosnUpdate == 'yes':
-                if currentSeas < newSeasons:
-                    print 'You are missing season(s) %d ' %(newSeasons - currentSeas)
-                else:
-                    print 'Don\'t worry you have all current seasons.'
+            print 'a. Check if all seasons are up to date'
+            print 'b. Chceck specific seasons'
+
+            options = raw_input("\nChoose one of the above options: ")
+
+            
+            # options = raw_input(" ")
+            filesInPath = sorted(os.listdir(self.showsfolder+show))
+
+            # Turn this into a function to just find out how many seasons there are
+            # Not sure how many times I've used this function
+
+            seasonCount = []
+            for file in filesInPath:
+                if file.startswith("Season "):
+                    seasonCount.append(file)
+
+            showId = (self.onlyShow(show))[0][1]
+            # showId = showId[0][1]
+            
+            if options == 'a':
+                for x in range(1,len(seasonCount)+1):
+                    missingEpisodes = []
+                    full_season_list = self.episodeList(x,showId,losteps=True)
+                    season = "/Season {}".format(x)
+                    episodes_in_folder = os.listdir(self.showsfolder+show+season)
+                    missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
+                    if len(missingEpisodes) == 0:
+                        print '\nThere are no missing episodes in \'Season {}\''.format(x)
+                    else:
+                        missingEpisodes = self.forbiddenFiles(missingEpisodes)
+                        print("\n\nMISSING EPISODES FOR SEASON {}\n").format(x)
+                        for episode in missingEpisodes: 
+                            epnum, epname = self.breakEpName(episode)
+
+
+            elif options == 'b':
+                try:
+                    whatSeason = (raw_input("\nWhat season do you want to check?: "))
+                    missingEpisodes = []
+                    if whatSeason.isdigit() and int(whatSeason) <= seasonCount:
+                        full_season_list = self.episodeList(int(whatSeason),showId,losteps=True)
+                        season = "/Season {}".format(whatSeason)
+                        episodes_in_folder = os.listdir(self.showsfolder+show+season)
+                        missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
+                        self.forbiddenFiles(missingEpisodes)
+                        if len(missingEpisodes) == 0:
+                            print 'There are no missing episodes in \'Season {}\''.format(whatSeason)
+                        else:
+                            print("\n\nMISSING EPISODES FOR SEASON {}\n").format(whatSeason)
+                            for episode in missingEpisodes: print episode
+
+                    else:
+                        print 'Error: Either the input is not in the season range or it\'s not a number.' 
+                except:
+                    print 'Can\'t check this season'
+            
+
 
         elif whatNext.lower() == 'd':
-
-            # Read the file into a list
-            # If statement to check to see if the show is bookmarked already
-
             if show in bookmarklist:
                 print '\nThis show is already bookmarked'
             else:
                 bookmarklist.append(show)
                 print '\nThis show is now BOOKMARKED'
+
+
+
 
         elif whatNext.lower() == 'e':
             with open(self.bookmarktxt,'r') as f:
@@ -132,7 +189,7 @@ class searchtools(object):
             shutil.rmtree(self.showsfolder+show)
 
             currentTime = time.strftime("%c")
-            log = "/Users/ty/Desktop/fsociety/py_programs/showBot/log.txt"
+            log = self.logtxt
             logString = "%s \t[DELETED] %s \n" % (currentTime, show)
 
             l = open(self.logtxt,"r")
@@ -148,13 +205,13 @@ class searchtools(object):
                         logString = "\n\n"+logString
                         break
 
-            # l = open(self.logtxt,'a')
-            # l.write(logString)
-            # l.close()
+
             logger.writeLog(self.logtxt,message=logString)
             print '[-]This show has been deleted'
         else:
             print 'The previous input was invalid.'
+
+
 
 
     def showSearch(self):
@@ -239,6 +296,7 @@ class searchtools(object):
                 # Counter counts how many different pairs of strings they have in common
                 counter = 1
                 for show in shows:
+                    if show == '[BOOKMARKED SHOWS].txt': continue
                     counter = 1
                     showParts = []
                     # print 'mynow'
@@ -310,36 +368,36 @@ class searchtools(object):
             else: print '\n\n[!] Error: This show was not found in MovieDB database. Maybe try and re-spell'
 
             
-            try:
+            # try:
             titleChoice = raw_input("\nChoose one of the above options: ")
-                if titleChoice == '1':
-                    if self.showExists(show) == False:
-                        self.newDir(show)
+            if titleChoice == '1':
+                if self.showExists(show) == False:
+                    self.newDir(show)
 
-                elif titleChoice == '2':
-                    
-                    if self.showExists(self.grammarCheck(show)) == False:
-                        self.newDir(self.grammarCheck(show))
-                    else:
-                        print '[!] Error: The show is already in the database'
-                    
-                elif titleChoice == '3' and foundshows!= None:
-                    if self.showExists(foundshows[0][0]) == False:
-                        self.newDir(foundshows[0][0])
-                    else:
-                        print '[!] Error: The show is already in the database'
-
-                elif titleChoice == 'more' and foundshows != None:
-                    if len(foundshows) > 1:
-                        for x in range(len(foundshows)):
-                            print("({})\t{}").format(x+1,foundshows[x][0])
-                    else:
-                        print '[!] Error: There are no more similar shows'
+            elif titleChoice == '2':
                 
+                if self.showExists(self.grammarCheck(show)) == False:
+                    self.newDir(self.grammarCheck(show))
                 else:
-                    print 'That option is out of range'
-            except:
-                # print 'That is not an option'
+                    print '[!] Error: The show is already in the database'
+                
+            elif titleChoice == '3' and foundshows!= None:
+                if self.showExists(foundshows[0][0]) == False:
+                    self.newDir(foundshows[0][0])
+                else:
+                    print '[!] Error: The show is already in the database'
+
+            elif titleChoice == 'more' and foundshows != None:
+                if len(foundshows) > 1:
+                    for x in range(len(foundshows)):
+                        print("({})\t{}").format(x+1,foundshows[x][0])
+                else:
+                    print '[!] Error: There are no more similar shows'
+            
+            else:
+                print 'That option is out of range'
+            # except:
+            #     print 'That is not an option'
 
     def showExists(self,something):
         showlist = [show.lower() for show in self.getList()]
@@ -353,7 +411,6 @@ class searchtools(object):
         logger = Logger()
         global api 
         api = '7e022dc2338ac2988670ddb93ccff401'
-        tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
         search = tmdb.Search()
         count = 1
 
@@ -369,9 +426,7 @@ class searchtools(object):
             
             overviewpath = self.showsfolder+nameshow+"/"+"overview.txt"
             logger.writeLog(overviewpath, message=overview, overview=True)
-            # f = open(overviewtext,'w',)
-            # f.write(overview.encode('utf-8'))
-            # f.close()
+
             show_id = (something['id'])
             poster = (something['poster_path'])
             if poster is None:
@@ -420,9 +475,7 @@ class searchtools(object):
                                 logString = "\n"+logString
                                 break
 
-                    # l = open(self.logtxt,'a')
-                    # l.write(logString)
-                    # l.close()
+
                     logger.writeLog(self.logtxt,message=logString)
                     
             else:
@@ -437,26 +490,61 @@ class searchtools(object):
 
     def addEpisodes(self,show_id,seasonpath,seasonNum):
         logger = Logger()
-        url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,api)
-        resp = requests.get(url)
-        json_data = requests.get(url).json()
+        epdetails = self.episodeList(seasonNum,show_id,losteps=False)
+        for x in range(len(epdetails)):
 
-        for episode in json_data["episodes"]:
-            epnum = episode["episode_number"]
-            epname = episode["name"].encode('utf-8')
-            epoverview = episode["overview"].encode('utf-8')
-            if epnum<10:
-                epnum = "0"+str(epnum)
-            filename = "E{} - {}".format(epnum,epname)
-            newepfolder = seasonpath+"/"+filename
+            ep_name = epdetails[x][0]
+            ep_over = epdetails[x][1]
+
+            newepfolder = seasonpath+"/"+ep_name
             newoverview = newepfolder+"/overview.txt"
+
             try:
                 os.mkdir(newepfolder)
-                logger.writeLog(newoverview,message=epoverview,overview=True)
+                logger.writeLog(newoverview,message=ep_over,overview=True)
 
             except:
-                LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(filename, newepfolder)
+                LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(ep_name, newepfolder)
                 print LOG_MESSAGE
                 logger.writeLog(showlogfile,message=LOG_MESSAGE)
- 
                 continue
+
+
+
+    def episodeList(self,seasonNum,show_id,losteps=True):
+        url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,self.api)
+            
+        eplist = []
+        resp = requests.get(url)
+        json_data = requests.get(url).json()
+        
+        for episode in json_data["episodes"]:
+
+            epnum = int(episode["episode_number"])
+            epname = episode["name"].encode('utf-8')
+            # print type(epnum), type(epname)
+            if epnum < 10: epnum = "0"+str(epnum)
+
+
+            #WANT TO CHANGE THIS TO HAVE ACTUAL FORMATING AND NOT HAVING TO ADD 0 IN FRONT OF NUMBERMU
+            filename = "E{} - {}".format(epnum,epname)
+
+            if losteps == False: eplist.append([filename,episode["overview"].encode('utf-8')])
+            else: eplist.append(filename)
+
+        return eplist
+
+    #Just to make sure lists don't contain any of these files 
+    def forbiddenFiles(self, list_taken):
+        list_taken = list(list_taken)
+        for x in range(len(list_taken)):
+            if list_taken[x].startswith("."): list_taken.remove(list_taken[x])
+        return list_taken
+
+    def breakEpName(self, epname):
+        indentifier = re.findall(r'E(\d+) - (.*)',epname)
+        epnum = indentifier[0][0]
+        epbane = indentifier[0][1]
+        return epnum, epname
+
+            
