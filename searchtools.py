@@ -129,19 +129,19 @@ class searchtools(object):
             # showId = showId[0][1]
             
             if options == 'a':
+                firsttime = True
                 for x in range(1,len(seasonCount)+1):
                     missingEpisodes = []
                     full_season_list = self.episodeList(x,showId,losteps=True)
                     season = "/Season {}".format(x)
                     episodes_in_folder = os.listdir(self.showsfolder+show+season)
                     missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
-                    if len(missingEpisodes) == 0:
-                        print '\nThere are no missing episodes in \'Season {}\''.format(x)
-                    else:
+                    # if len(missingEpisodes) == 0:
+                    #     print '\nThere are no missing episodes in \'Season {}\''.format(x)
+                    if len(missingEpisodes)>0:
                         missingEpisodes = self.forbiddenFiles(missingEpisodes)
-                        print("\n\nMISSING EPISODES FOR SEASON {}\n").format(x)
-                        for episode in missingEpisodes: 
-                            epnum, epname = self.breakEpName(episode)
+                        self.missingTable(x,missingEpisodes, firstime=firsttime)
+                        firsttime = False
 
 
             elif options == 'b':
@@ -157,8 +157,8 @@ class searchtools(object):
                         if len(missingEpisodes) == 0:
                             print 'There are no missing episodes in \'Season {}\''.format(whatSeason)
                         else:
-                            print("\n\nMISSING EPISODES FOR SEASON {}\n").format(whatSeason)
-                            for episode in missingEpisodes: print episode
+                            missingEpisodes = self.forbiddenFiles(missingEpisodes)
+                            self.missingTable(whatSeason,missingEpisodes)
 
                     else:
                         print 'Error: Either the input is not in the season range or it\'s not a number.' 
@@ -546,5 +546,22 @@ class searchtools(object):
         epnum = indentifier[0][0]
         epbane = indentifier[0][1]
         return epnum, epname
+
+    def missingTable(self,season,epnames,firstime=True):
+        if firstime is True:
+            print("\n{:<10} {:<10} {}").format("Season","EP #", "EP. NAME")
+            print ' '
+        
+        for x in range(len(epnames)):
+            indentifier = re.findall(r'E(\d+) - (.*)',epnames[x])
+            epnum = indentifier[0][0]
+            epname = indentifier[0][1]
+            if x == 0:
+                print("{:<10} {:<10} {}").format(season,epnum, epname)
+            else:
+                 print("{:<10} {:<10} {}").format(" ",epnum, epname)
+
+            # print '-'*60
+        print '-'*70
 
             
