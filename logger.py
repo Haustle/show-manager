@@ -13,18 +13,21 @@ class Logger(object):
     def writeLog(self,filepath, message=None, overview=False):
 
         if overview is True: 
-            try:
-                f = open(filepath,'w',)
-                f.write(message)
-            except Exception as e:
-                print 'Error: There was an error when trying to write into the file'
-                print str(e)
-            finally:
-                 f.close()
+            while True:
+                try:
+                    f = open(filepath,'w',)
+                    f.write(message)
+                except UnicodeDecodeError:
+                    message = message.decode('utf-8')
+                except UnicodeEncodeError:
+                    message = message.encode('utf-8')
+                finally:
+                    f.write(message)
+                    break
+
             
         else:
             t = open(filepath,'a')
             t.write(message)
             t.close()
-
 
