@@ -20,5 +20,8 @@ class authentication(object):
 projectFolder = os.getcwd()+"/"
 a = authentication(projectFolder)
 print a.root_folder
-print a.__dict__.keys()
-print "hi"
+instance_variables = a.__dict__.keys()
+s = searchtools(None,projectFolder)
+print type(s)
+# for dir in instance_variables:
+#     print s.(dir)
