@@ -12,6 +12,7 @@ WELCOME TO SHOW MANAGER v.1 by Tyrus Miles
 
 newShows = []
 while True:
+    s = searchtools.searchtools(projectFolder)
     command = (raw_input("\n\nEnter command (type help): ").lower()).split(" ")
     # try:
     if command[0] == '':
@@ -53,18 +54,16 @@ while True:
                     if command[1] == "-s":
 
                         askShow = " ".join(command[2:])
-                        s = searchtools.searchtools(askShow,projectFolder)
-                        s.showSearch()
+                        s.showSearch(show=askShow)
 
                     else:
                         askShow = " ".join(command[2:])
-                        m = searchtools.searchtools(askShow,projectFolder)
-                        m.showSearch() 
+                        s.showSearch(show=askShow)
 
                 #This is for if the user only inputs 's -m' or 's -s'
                 else:
-                    askShow = None
-                    s = searchtools.searchtools(askShow,projectFolder)
+                    # askShow = None
+                    # s = searchtools.searchtools(askShow,projectFolder)
                     s.showSearch()
 
             else:
