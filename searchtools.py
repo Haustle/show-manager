@@ -12,7 +12,7 @@ class searchtools(object):
         self.show = show
         self.showsfolder = root_folder + "shows/"
         self.showtxt = root_folder + "show_list.txt"
-        self.bookmarktxt = root_folder + "/shows/[BOOKMARKED SHOWS].txt"
+        self.bookmarktxt = self.showsfolder + "[BOOKMARKED SHOWS].txt"
         self.logtxt = root_folder + "log.txt"
         self.api = '7e022dc2338ac2988670ddb93ccff401'
         
@@ -228,34 +228,38 @@ class searchtools(object):
         rankinglist = []
         mightShow = []
         newShows = []
-
-        self.similarStrings(rankinglist,mightShow)
-        if len(rankinglist) == 0 and len(mightShow) == 0:
-            self.likeToAdd(self.show)
-
-        else:
-            showAbove = raw_input("\nIs the show you were looking for listed above?: ").lower()
-            if showAbove == 'yes':
-                whatNum = int(raw_input("Enter the integer of the show: "))
-                if whatNum <= (len(rankinglist) + len(mightShow)):
-                    whatNum -= 1
-                    if whatNum >= len(rankinglist):
-                        showfound = mightShow[whatNum-len(rankinglist)]
-                        self.showOptions(showfound)
-                    else:
-                        showfound = rankinglist[whatNum]
-                        self.showOptions(showfound)
-                else:
-                    print '[!] Error: The number (%d) entered is out of index.' %(whatNum)
-            else:
+        if len(showList) > 0:
+            self.similarStrings(rankinglist,mightShow)
+            if len(rankinglist) == 0 and len(mightShow) == 0:
                 self.likeToAdd(self.show)
-                # print 'o wow'
+
+            else:
+                showAbove = raw_input("\nIs the show you were looking for listed above?: ").lower()
+                if showAbove == 'yes':
+                    whatNum = int(raw_input("Enter the integer of the show: "))
+                    if whatNum <= (len(rankinglist) + len(mightShow)):
+                        whatNum -= 1
+                        if whatNum >= len(rankinglist):
+                            showfound = mightShow[whatNum-len(rankinglist)]
+                            self.showOptions(showfound)
+                        else:
+                            showfound = rankinglist[whatNum]
+                            self.showOptions(showfound)
+                    else:
+                        print '[!] Error: The number (%d) entered is out of index.' %(whatNum)
+                else:
+                    self.likeToAdd(self.show)
+                    # print 'o wow'
+        else:
+            self.likeToAdd(self.show)
                 
     def similarStrings(self,rankinglist,otherlist):
-        print "hello"
-        rankings = self.matchinglist(self.show)
 
-        for x in range(21):
+        rankings = self.matchinglist(self.show)
+        norm_list_length = 21
+        if len(rankings) < norm_list_length: norm_list_length = len(rankings)
+
+        for x in range(norm_list_length):
             if rankings[x][1] > 0.2:
                 rankinglist.append(rankings[x][0])
                 continue
@@ -263,15 +267,25 @@ class searchtools(object):
             elif rankings[x][1] < 0.1:
                 otherlist.append(rankings[x][0])
 
-        print "\nTop Results"
-        print '-'*15
-        for z in range(len(rankinglist)):
-            print "(%d) \t%s" %(z+1, rankinglist[z])
-        print "\nSimilar Matches"
-        print "-"*15
 
-        for y in range(len(otherlist)):
-            print "(%d) \t%s" %(y+len(rankinglist)+1, otherlist[y])
+        dash = "-"*15
+        print "\nTop Results"
+        print dash
+
+
+        if len(rankinglist) > 0:
+            for z in range(len(rankinglist)):
+                print "(%d) \t%s" %(z+1, rankinglist[z])
+        else:
+            print 'none'
+
+        print "\nSimilar Matches"
+        print dash
+        if len(otherlist) > 0:
+            for y in range(len(otherlist)):
+                print "(%d) \t%s" %(y+len(rankinglist)+1, otherlist[y])
+        else:
+            print 'none'
 
     def matchinglist(self,name):
         shows = self.getList()
@@ -405,7 +419,9 @@ class searchtools(object):
 
 
     def getList(self):
-        return os.listdir(self.showsfolder)
+        list = os.listdir(self.showsfolder)
+        list = self.forbiddenFiles(list)
+        return list
 
     def addShowInfo(self,show):
         logger = Logger()
@@ -466,14 +482,15 @@ class searchtools(object):
                     l = open(self.logtxt,"r")
                     lastline = l.readlines()
                     l.close()
-                    lastline = lastline[len(lastline)-1]
-                    lastLog = lastline.split(" ")
+                    if len(lastline) > 0:
+                        lastline = lastline[len(lastline)-1]
+                        lastLog = lastline.split(" ")
 
-                    if len(lastLog)>0:
-                        for part in lastLog:
-                            if part == '\t[DELETED]':
-                                logString = "\n"+logString
-                                break
+                        if len(lastLog)>0:
+                            for part in lastLog:
+                                if part == '\t[DELETED]':
+                                    logString = "\n"+logString
+                                    break
 
 
                     logger.writeLog(self.logtxt,message=logString)
@@ -536,10 +553,15 @@ class searchtools(object):
 
     #Just to make sure lists don't contain any of these files 
     def forbiddenFiles(self, list_taken):
-        list_taken = list(list_taken)
-        for x in range(len(list_taken)):
-            if list_taken[x].startswith("."): list_taken.remove(list_taken[x])
-        return list_taken
+        newlist = list(list_taken)
+    
+        for file in newlist:
+
+            if (file.startswith(".") or (file == '[BOOKMARKED SHOWS].txt')): 
+                newlist.remove(newlist[newlist.index(file)])
+            
+        print "This is the returnedorbiddenFiles list : {}".format(newlist)
+        return newlist
 
     def breakEpName(self, epname):
         indentifier = re.findall(r'E(\d+) - (.*)',epname)
