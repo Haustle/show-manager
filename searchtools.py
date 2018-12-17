@@ -7,18 +7,16 @@ from logger import Logger
 
 #Need to add folderBalance need to find a simpler way to do it
 class searchtools(object):
-    def __init__(self,show,root_folder):
+    def __init__(self,root_folder):
 
-        self.show = show
         self.showsfolder = root_folder + "shows/"
         self.showtxt = root_folder + "show_list.txt"
         self.bookmarktxt = self.showsfolder + "[BOOKMARKED SHOWS].txt"
         self.logtxt = root_folder + "log.txt"
-        self.api = '7e022dc2338ac2988670ddb93ccff401'
         
         
     def grammarCheck(self,show):
-        titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', self.show)
+        titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', show)
         showName = self.show
         splitShow = showName.split(" ")
         i = 0
@@ -50,7 +48,6 @@ class searchtools(object):
 
         else:
             showName = showName.title()
-        # self.show = showName
         return showName
     
     def showOptions(self,show):
@@ -214,24 +211,24 @@ class searchtools(object):
 
 
 
-    def showSearch(self):
+    def showSearch(self,show=None):
         showList = self.getList()
         with open(self.bookmarktxt) as b:
             bookmarklist = [line.strip() for line in b]
         bookmarklist.sort()
         
-        if self.show is None:
-            self.show  = raw_input("Search for a show: ")
-            if self.show == '':
+        if show is None:
+            show  = raw_input("Search for a show: ")
+            if show == '':
                 return 
 
         rankinglist = []
         mightShow = []
         newShows = []
         if len(showList) > 0:
-            self.similarStrings(rankinglist,mightShow)
+            self.similarStrings(rankinglist,mightShow,show)
             if len(rankinglist) == 0 and len(mightShow) == 0:
-                self.likeToAdd(self.show)
+                self.likeToAdd(show)
 
             else:
                 showAbove = raw_input("\nIs the show you were looking for listed above?: ").lower()
@@ -248,14 +245,14 @@ class searchtools(object):
                     else:
                         print '[!] Error: The number (%d) entered is out of index.' %(whatNum)
                 else:
-                    self.likeToAdd(self.show)
+                    self.likeToAdd(show)
                     # print 'o wow'
         else:
-            self.likeToAdd(self.show)
+            self.likeToAdd(show)
                 
-    def similarStrings(self,rankinglist,otherlist):
+    def similarStrings(self,rankinglist,otherlist,show):
 
-        rankings = self.matchinglist(self.show)
+        rankings = self.matchinglist(show)
         norm_list_length = 21
         if len(rankings) < norm_list_length: norm_list_length = len(rankings)
 
@@ -529,7 +526,8 @@ class searchtools(object):
 
 
     def episodeList(self,seasonNum,show_id,losteps=True):
-        url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,self.api)
+        api = '7e022dc2338ac2988670ddb93ccff401'
+        url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,api)
             
         eplist = []
         resp = requests.get(url)
@@ -558,9 +556,7 @@ class searchtools(object):
         for file in newlist:
 
             if (file.startswith(".") or (file == '[BOOKMARKED SHOWS].txt')): 
-                newlist.remove(newlist[newlist.index(file)])
-            
-        print "This is the returnedorbiddenFiles list : {}".format(newlist)
+                newlist.remove(newlist[newlist.index(file)])            
         return newlist
 
     def breakEpName(self, epname):
