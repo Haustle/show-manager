@@ -23,5 +23,6 @@ print a.root_folder
 instance_variables = a.__dict__.keys()
 s = searchtools(None,projectFolder)
 print type(s)
+print 'kek'
 # for dir in instance_variables:
 #     print s.(dir)
