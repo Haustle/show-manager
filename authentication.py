@@ -21,3 +21,4 @@ projectFolder = os.getcwd()+"/"
 a = authentication(projectFolder)
 print a.root_folder
 print a.__dict__.keys()
+print "hi"
