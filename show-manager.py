@@ -2,12 +2,17 @@ import os
 import searchtools
 
 #The paths of the list of shows
-projectFolder = "/Users/ty/Desktop/fsociety/py_programs/showBot/"
+projectFolder = os.getcwd()+"/"
 
+print('''
+==================================================
+WELCOME TO SHOW MANAGER v.1 by Tyrus Miles
+==================================================
+''')
 
 newShows = []
 while True:
-    command = (raw_input("\nEnter command (type help): ").lower()).split(" ")
+    command = (raw_input("\n\nEnter command (type help): ").lower()).split(" ")
     # try:
     if command[0] == '':
         break
@@ -40,33 +45,33 @@ while True:
     elif (command[0] == 's') or (command[0] == 'search'):
         # try:
         if len(command) > 1:
-                if command[1] == '-s' or command[1] == '-m':
-                    # This for commands that have the length required for a command search
-                    
-                    if len(command) > 2:
-                        reassignName = ""
-                        if command[1] == "-s":
+            if command[1] == '-s' or command[1] == '-m':
+                # This for commands that have the length required for a command search
+                
+                if len(command) > 2:
+                    reassignName = ""
+                    if command[1] == "-s":
 
-                            askShow = " ".join(command[2:])
-                            s = searchtools.searchtools(askShow,projectFolder)
-                            s.showSearch()
-
-                        else:
-                            askShow = " ".join(command[2:])
-                            m = searchtools.searchtools(askShow,projectFolder)
-                            m.showSearch() 
-    
-                    #This is for if the user only inputs 's -m' or 's -s'
-                    else:
-                        askShow = None
+                        askShow = " ".join(command[2:])
                         s = searchtools.searchtools(askShow,projectFolder)
                         s.showSearch()
 
+                    else:
+                        askShow = " ".join(command[2:])
+                        m = searchtools.searchtools(askShow,projectFolder)
+                        m.showSearch() 
+
+                #This is for if the user only inputs 's -m' or 's -s'
                 else:
-                    print 'Error: The second variable in that command \'%s\' was not recognized' %(command[1])
-                
+                    askShow = None
+                    s = searchtools.searchtools(askShow,projectFolder)
+                    s.showSearch()
+
+            else:
+                print 'Error: The second variable in that command \'%s\' was not recognized' %(command[1])
+            
         # except:
-                # print 'Error: The quick command for searching did not work'
+        #         print 'Error: The quick command for searching did not work'
 
     elif (command[0] == 'a') or (command[0] == 'add'):
         print 'Make sure the links you send are to public profiles (private profiles don\'t work)'
