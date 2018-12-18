@@ -23,6 +23,7 @@ class Logger(object):
                     message = message.encode('utf-8')
                 finally:
                     f.write(message)
+                    f.close() #Not sure i fthis line belongs here if something goes wrong just delete this
                     break
 
             

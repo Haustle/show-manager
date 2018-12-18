@@ -1,14 +1,17 @@
 import os
 import searchtools
+from authentication import authentication
 
 #The paths of the list of shows
 projectFolder = os.getcwd()+"/"
 
-print('''
-==================================================
-WELCOME TO SHOW MANAGER v.1 by Tyrus Miles
-==================================================
-''')
+
+
+# Authenticates and makes sure all files are in the current directory
+s = authentication(projectFolder).main()
+if s != None: print s
+
+# print 'show-manager by Tyrus Miles'
 
 newShows = []
 while True:

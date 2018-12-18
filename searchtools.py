@@ -10,14 +10,15 @@ class searchtools(object):
     def __init__(self,root_folder):
 
         self.showsfolder = root_folder + "shows/"
-        self.showtxt = root_folder + "show_list.txt"
+        self.showtxt = root_folder + "savelist.txt"
         self.bookmarktxt = self.showsfolder + "[BOOKMARKED SHOWS].txt"
         self.logtxt = root_folder + "log.txt"
+        self.downfolder = root_folder+"downloads"
         
         
     def grammarCheck(self,show):
         titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', show)
-        showName = self.show
+        showName = show
         splitShow = showName.split(" ")
         i = 0
         if titleshit > 0:
@@ -105,7 +106,7 @@ class searchtools(object):
             # Allow the user to enter '1-15 and 2-34' so they can download in groups (maybe limit them to 25 at a time)
 
             print 'SHOW UPDATE'
-            print 'a. Check if all seasons are up to date'
+            print '\na. Check if all seasons are up to date'
             print 'b. Chceck specific seasons'
 
             options = raw_input("\nChoose one of the above options: ")
@@ -136,6 +137,7 @@ class searchtools(object):
                     # if len(missingEpisodes) == 0:
                     #     print '\nThere are no missing episodes in \'Season {}\''.format(x)
                     if len(missingEpisodes)>0:
+                        print ''
                         missingEpisodes = self.forbiddenFiles(missingEpisodes)
                         self.missingTable(x,missingEpisodes, firstime=firsttime)
                         firsttime = False
@@ -267,22 +269,25 @@ class searchtools(object):
 
         dash = "-"*15
         print "\nTop Results"
-        print dash
+        print '-'*70
+        print "{:<8}{}\n".format("RANK","NAME")
+        # print dash
 
 
         if len(rankinglist) > 0:
             for z in range(len(rankinglist)):
-                print "(%d) \t%s" %(z+1, rankinglist[z])
+                print "%d \t%s" %(z+1, rankinglist[z])
         else:
             print 'none'
 
-        print "\nSimilar Matches"
-        print dash
+        
+        # print dash
         if len(otherlist) > 0:
+            print "\nSimilar Matches"
             for y in range(len(otherlist)):
-                print "(%d) \t%s" %(y+len(rankinglist)+1, otherlist[y])
-        else:
-            print 'none'
+                print "%d \t%s" %(y+len(rankinglist)+1, otherlist[y])
+        # else:
+            # print 'none'
 
     def matchinglist(self,name):
         shows = self.getList()
@@ -360,7 +365,7 @@ class searchtools(object):
 
 
     def likeToAdd(self,show):
-        addShow = raw_input("We couldn\'t find \'%s\' in our database'. Would you like to add it?: " % show)
+        addShow = raw_input(" Would you like to add \'%s\'?: " % show)
         if addShow.lower() == 'yes':
 
 
