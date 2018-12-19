@@ -13,11 +13,11 @@ class authentication(object):
         self.dirList = (searchtools(root_folder)).__dict__.values()
 
     def main(self):
+
         missing = []
         for dir in self.dirList:
             exists = os.path.exists(dir)
-            
-                
+
             if os.path.exists(dir) is False:
                 # print("Dir exists: {}\n").format("Missing", dir)
                 filename = (dir.split("/"))
@@ -40,7 +40,10 @@ class authentication(object):
                 missing.append(lookingfor)
                 continue
 
-    
+            else:
+                if self.dirList[-1] == dir: pass
+                else: continue
+
             if len(missing) != 0:
                 missingstr = "Number of missing files: {}\n".format(len(missing))
                 for x in range(len(missing)):
