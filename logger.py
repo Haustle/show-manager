@@ -14,8 +14,9 @@ class Logger(object):
 
         if overview is True: 
             while True:
+                f = open(filepath,'w',)
                 try:
-                    f = open(filepath,'w',)
+                    
                     f.write(message)
                 except UnicodeDecodeError:
                     message = message.decode('utf-8')

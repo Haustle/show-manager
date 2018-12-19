@@ -7,6 +7,8 @@ from logger import Logger
 
 #Need to add folderBalance need to find a simpler way to do it
 class searchtools(object):
+    isShow = False
+
     def __init__(self,root_folder):
 
         self.showsfolder = root_folder + "shows/"
@@ -14,12 +16,16 @@ class searchtools(object):
         self.bookmarktxt = self.showsfolder + "[BOOKMARKED SHOWS].txt"
         self.logtxt = root_folder + "log.txt"
         self.downfolder = root_folder+"downloads"
+        self.moviesfolder = root_folder + "movies/"
+        self.bookmarkmovies = self.moviesfolder + "[BOOKMARKED MOVIES].txt"
         
         
     def grammarCheck(self,show):
         titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', show)
         showName = show
         splitShow = showName.split(" ")
+        # searchtools.isMovie = True
+        # print searchtools.isMovie
         i = 0
         if titleshit > 0:
             for item in splitShow:
@@ -214,26 +220,19 @@ class searchtools(object):
 
 
     def showSearch(self,show=None):
-        showList = self.getList()
-        with open(self.bookmarktxt) as b:
-            bookmarklist = [line.strip() for line in b]
-        bookmarklist.sort()
-        
-        if show is None:
-            show  = raw_input("Search for a show: ")
-            if show == '':
-                return 
+
+        medialist = self.getMediaList()
 
         rankinglist = []
         mightShow = []
-        newShows = []
-        if len(showList) > 0:
+
+        if len(medialist) > 0:
             self.similarStrings(rankinglist,mightShow,show)
             if len(rankinglist) == 0 and len(mightShow) == 0:
                 self.likeToAdd(show)
 
             else:
-                showAbove = raw_input("\nIs the show you were looking for listed above?: ").lower()
+                showAbove = raw_input("\nIs the result you were looking for listed above?: ").lower()
                 if showAbove == 'yes':
                     whatNum = int(raw_input("Enter the integer of the show: "))
                     if whatNum <= (len(rankinglist) + len(mightShow)):
@@ -283,14 +282,16 @@ class searchtools(object):
         
         # print dash
         if len(otherlist) > 0:
-            print "\nSimilar Matches"
+            print "\nSimilar Results"
+            print '-'*70
+            print "{:<8}{}\n".format("RANK","NAME")
             for y in range(len(otherlist)):
                 print "%d \t%s" %(y+len(rankinglist)+1, otherlist[y])
         # else:
             # print 'none'
 
     def matchinglist(self,name):
-        shows = self.getList()
+        shows = self.getMediaList()
         shows.sort()
         if name == None: name = self.show
         
@@ -345,7 +346,7 @@ class searchtools(object):
     
 
     def newDir(self,show):
-        folderloc = self.showsfolder+show
+        folderloc = (self.showsfolder+show) if searchtools.isShow is True else (self.moviesfolder+show)
         os.mkdir(folderloc)
         global showlogfile
         showlogfile = "%s/%s log.txt" %(folderloc,show)
@@ -362,10 +363,19 @@ class searchtools(object):
             for x in range(len(search.results)):
                 list_results.append([((search.results[x])['name']).encode('utf-8'), search.results[x]['id']])
             return list_results
+    def onlyMovie(self,movie):
+        tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
+        search = tmdb.Search()
+        reponse = search.movie(query=movie)
+        list_results = []
+        if len(search.results)>0:
+            for x in range(len(search.results)):
+                list_results.append([((search.results[x])['title']).encode('utf-8'), search.results[x]['id']])
+            return list_results
 
 
     def likeToAdd(self,show):
-        addShow = raw_input(" Would you like to add \'%s\'?: " % show)
+        addShow = raw_input("Would you like to add \'%s\'?: " % show)
         if addShow.lower() == 'yes':
 
 
@@ -373,10 +383,11 @@ class searchtools(object):
             print '[1] Keep the original name:\t\'%s\'' %(show)
             print '[2] Get a title case name:\t\'%s\'' %(self.grammarCheck(show))
 
-            foundshows = self.onlyShow(show)
+            foundshows = self.onlyShow(show) if searchtools.isShow else self.onlyMovie(show)
 
             if foundshows != None : 
-                print'[3] Closest real show:\t\t\'%s\'' %(foundshows[0][0])
+                whatisit = "show" if searchtools.isShow else "movie"
+                print'[3] Closest real {}:\t\t\'{}\''.format(whatisit,foundshows[0][0])
                 # print len(foundshows)
                 print '\n...More options'
 
@@ -387,18 +398,18 @@ class searchtools(object):
             # try:
             titleChoice = raw_input("\nChoose one of the above options: ")
             if titleChoice == '1':
-                if self.showExists(show) == False:
+                if self.exists(show) == False:
                     self.newDir(show)
 
             elif titleChoice == '2':
                 
-                if self.showExists(self.grammarCheck(show)) == False:
+                if self.exists(self.grammarCheck(show)) == False:
                     self.newDir(self.grammarCheck(show))
                 else:
                     print '[!] Error: The show is already in the database'
                 
             elif titleChoice == '3' and foundshows!= None:
-                if self.showExists(foundshows[0][0]) == False:
+                if self.exists(foundshows[0][0]) == False:
                     self.newDir(foundshows[0][0])
                 else:
                     print '[!] Error: The show is already in the database'
@@ -415,15 +426,22 @@ class searchtools(object):
             # except:
             #     print 'That is not an option'
 
-    def showExists(self,something):
-        showlist = [show.lower() for show in self.getList()]
-        return True if something.lower() in showlist else False
+    def exists(self,something):
+        medialist = [item.lower() for item in self.getMediaList()]
+        return True if something.lower() in medialist else False
 
 
-    def getList(self):
-        list = os.listdir(self.showsfolder)
-        list = self.forbiddenFiles(list)
-        return list
+    def getMediaList(self):
+        medialist = []
+
+        if searchtools.isShow:
+            medialist = os.listdir(self.showsfolder)        
+        else:
+            medialist = os.listdir(self.moviesfolder)
+
+        # print medialist
+        return self.forbiddenFiles(medialist)
+        
 
     def addShowInfo(self,show):
         logger = Logger()
@@ -432,17 +450,20 @@ class searchtools(object):
         search = tmdb.Search()
         count = 1
 
-        nameshow = show
-        response = search.tv(query=nameshow)
-        showpath = self.showsfolder+show+"/"
+       
+        response = search.tv(query=show) if searchtools.isShow is True else search.movie(query=show)
+        showpath = (self.showsfolder+show+"/") if searchtools.isShow is True else (self.moviesfolder+show+"/")
 
         posterBase = 'https://image.tmdb.org/t/p/w500'
         if len(search.results) > 0:
             something = search.results[0]
            
             overview = something['overview']
-            
-            overviewpath = self.showsfolder+nameshow+"/"+"overview.txt"
+            overviewpath = ""
+            if searchtools.isShow is True:
+                overviewpath = self.showsfolder+show+"/overview.txt"
+            else:
+                overviewpath = self.moviesfolder+show+"/overview.txt"
             logger.writeLog(overviewpath, message=overview, overview=True)
 
             show_id = (something['id'])
@@ -465,42 +486,43 @@ class searchtools(object):
                     imgfile.write(imgDownload.read())
                     imgfile.close()
 
-                    url = "https://api.themoviedb.org/3/tv/%d?api_key=%s&language=en-US" % (show_id,api)
-                    payload = "{}"
-                    json_data = requests.get(url).json()
-                    seasonnum = json_data['number_of_seasons']
-                    for y in range(1,seasonnum+1):
-                        newSeason = "Season {}".format(y)
-                        seasonpath = showpath+newSeason
-                        os.mkdir(seasonpath)
-                        self.addEpisodes(show_id,seasonpath,y)
+                    if searchtools.isShow is True:
+                        url = "https://api.themoviedb.org/3/tv/%d?api_key=%s&language=en-US" % (show_id,api)
+                        payload = "{}"
+                        json_data = requests.get(url).json()
+                        seasonnum = json_data['number_of_seasons']
+                        for y in range(1,seasonnum+1):
+                            newSeason = "Season {}".format(y)
+                            seasonpath = showpath+newSeason
+                            os.mkdir(seasonpath)
+                            self.addEpisodes(show_id,seasonpath,y)
 
-                        #THIS WHERE THE EPISODES NEEDS TO BE ADDED FOR THE SHOW
-
-
-                    print '[+] %s retreived' %(show)
-                    currentTime = time.strftime("%c")
-                    logString = "%s \t[NEW SHOW] %s (%d seasons)\n" % (currentTime, show, seasonnum)
-                    l = open(self.logtxt,"r")
-                    lastline = l.readlines()
-                    l.close()
-                    if len(lastline) > 0:
-                        lastline = lastline[len(lastline)-1]
-                        lastLog = lastline.split(" ")
-
-                        if len(lastLog)>0:
-                            for part in lastLog:
-                                if part == '\t[DELETED]':
-                                    logString = "\n"+logString
-                                    break
+                            #THIS WHERE THE EPISODES NEEDS TO BE ADDED FOR THE SHOW
 
 
-                    logger.writeLog(self.logtxt,message=logString)
+                        print '[+] %s retreived' %(show)
+                        currentTime = time.strftime("%c")
+                        logString = "%s \t[NEW SHOW] %s (%d seasons)\n" % (currentTime, show, seasonnum)
+                        l = open(self.logtxt,"r")
+                        lastline = l.readlines()
+                        l.close()
+                        if len(lastline) > 0:
+                            lastline = lastline[len(lastline)-1]
+                            lastLog = lastline.split(" ")
+
+                            if len(lastLog)>0:
+                                for part in lastLog:
+                                    if part == '\t[DELETED]':
+                                        logString = "\n"+logString
+                                        break
+
+
+                        logger.writeLog(self.logtxt,message=logString)
                     
             else:
                 print '%s path doesn\'t exist' %(show)
         else:
-            print '[!] Error: Show picture, show overview, and season was not found for \'%s\' ' %(show)
+            print '[!] Error: Poster, overview, and season was not found for \'%s\' ' %(show)
             seasonAmount = raw_input("Enter the amount of seasons this show has: ")
             if seasonAmount.isdigit():
                 for i in range(0,int(seasonAmount)):
@@ -559,8 +581,7 @@ class searchtools(object):
         newlist = list(list_taken)
     
         for file in newlist:
-
-            if (file.startswith(".") or (file == '[BOOKMARKED SHOWS].txt')): 
+            if (file.startswith(".") or (file == '[BOOKMARKED SHOWS].txt') or (file == '[BOOKMARKED MOVIES].txt')): 
                 newlist.remove(newlist[newlist.index(file)])            
         return newlist
 

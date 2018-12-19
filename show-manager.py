@@ -57,17 +57,35 @@ while True:
                     if command[1] == "-s":
 
                         askShow = " ".join(command[2:])
+                        searchtools.searchtools.isShow = True
                         s.showSearch(show=askShow)
+                        
 
                     else:
-                        askShow = " ".join(command[2:])
-                        s.showSearch(show=askShow)
+                        askMovie = " ".join(command[2:])
+                        searchtools.searchtools.isShow = False
+                        s.showSearch(show=askMovie)
+
 
                 #This is for if the user only inputs 's -m' or 's -s'
                 else:
-                    # askShow = None
-                    # s = searchtools.searchtools(askShow,projectFolder)
-                    s.showSearch()
+                    print 'What do you want to search for? '
+                    print 'a. Shows\nb. Movies'
+                    answer = raw_input("Enter one of the options").lower()
+                    if answer == 'a':
+                        askShow = raw_input("What show do you want to search for: ")
+                        s.isShow = True
+                        s.showSearch(show=askShow)
+                        
+
+                    elif answer == 'b':
+                        
+                        askMovie = raw_input("What movie do you want to search for: ")
+                        s.isMovie = True
+                        s.showSearch(movie=askMovie)
+                        
+                    else:
+                        print 'This is not an option'
 
             else:
                 print 'Error: The second variable in that command \'%s\' was not recognized' %(command[1])
