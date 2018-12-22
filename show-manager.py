@@ -1,21 +1,29 @@
 import os
 import searchtools
 from authentication import authentication
+from logger import Logger
 
-#The paths of the list of shows
+# the root folder
 projectFolder = os.getcwd()+"/"
-
+logger = Logger()
 
 
 # Authenticates and makes sure all files are in the current directory
 s = authentication(projectFolder).main()
-if s != None: print s
+if s != None: print s #prints if there is a missing file
 
 # print 'show-manager by Tyrus Miles'
 
 newShows = []
 while True:
     s = searchtools.searchtools(projectFolder)
+
+
+
+
+
+
+
     command = (raw_input("\n\nEnter command (type help): ").lower()).split(" ")
     # try:
     if command[0] == '':
@@ -47,7 +55,8 @@ while True:
             '\nThanks for using the program!'
 
     elif (command[0] == 's') or (command[0] == 'search'):
-        # try:
+
+        filepath =""
         if len(command) > 1:
             if command[1] == '-s' or command[1] == '-m':
                 # This for commands that have the length required for a command search
@@ -60,6 +69,7 @@ while True:
                         searchtools.searchtools.isShow = True
                         s.showSearch(show=askShow)
                         
+                            
 
                     else:
                         askMovie = " ".join(command[2:])
@@ -74,14 +84,14 @@ while True:
                     answer = raw_input("Enter one of the options").lower()
                     if answer == 'a':
                         askShow = raw_input("What show do you want to search for: ")
-                        s.isShow = True
+                        searchtools.isShow = True
                         s.showSearch(show=askShow)
                         
 
                     elif answer == 'b':
                         
                         askMovie = raw_input("What movie do you want to search for: ")
-                        s.isMovie = True
+                        searchtools.isShow = False
                         s.showSearch(movie=askMovie)
                         
                     else:
@@ -90,8 +100,13 @@ while True:
             else:
                 print 'Error: The second variable in that command \'%s\' was not recognized' %(command[1])
             
-        # except:
-        #         print 'Error: The quick command for searching did not work'
+
+        medialist = sorted(s.getMediaList())
+        filepath = s.getTextFile()
+        open(filepath,'w').close()
+        for file in medialist:
+            logger.writeLog(filepath,message=file+"\n")
+
 
     elif (command[0] == 'a') or (command[0] == 'add'):
         print 'Make sure the links you send are to public profiles (private profiles don\'t work)'

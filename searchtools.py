@@ -8,18 +8,39 @@ from logger import Logger
 #Need to add folderBalance need to find a simpler way to do it
 class searchtools(object):
     isShow = False
+    
 
     def __init__(self,root_folder):
 
         self.showsfolder = root_folder + "shows/"
-        self.showtxt = root_folder + "savelist.txt"
+        self.showtxt = root_folder + "showlist.txt"
         self.bookmarktxt = self.showsfolder + "[BOOKMARKED SHOWS].txt"
         self.logtxt = root_folder + "log.txt"
         self.downfolder = root_folder+"downloads"
         self.moviesfolder = root_folder + "movies/"
+        self.movietxt = root_folder + "movielist.txt"
         self.bookmarkmovies = self.moviesfolder + "[BOOKMARKED MOVIES].txt"
         
+    def getTextFile(self):
+        return self.movietxt if searchtools.isShow is False else self.showtxt
         
+        
+    def localDelete(self):
+        currentTime = time.strftime("%c")
+        with open(self.getTextFile(),'r') as f:
+            logShowList = [line.strip() for line in f]
+
+        folderlist = self.getMediaList()
+        for show in logShowList:
+            if show not in folderlist:
+
+                logString = "\n%s \t[LOCAL DELETE] %s \n" % (currentTime, show)
+                l = open(self.logtxt,'a')
+                l.write(logString)
+                l.close()
+        
+
+
     def grammarCheck(self,show):
         titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', show)
         showName = show
@@ -73,7 +94,7 @@ class searchtools(object):
 
 
 
-        if whatNext.lower() == 'a':
+        if whatNext.lower() == 'a' and searchtools.isShow:
             print 'Show Details : \'%s\'' %(show)
             filesInPath = sorted(os.listdir(self.showsfolder+show))
             # print filesInPath
@@ -195,7 +216,7 @@ class searchtools(object):
 
             currentTime = time.strftime("%c")
             log = self.logtxt
-            logString = "%s \t[DELETED] %s \n" % (currentTime, show)
+            logString = "%s \t[DELETE] %s \n" % (currentTime, show)
 
             l = open(self.logtxt,"r")
             lastline = l.readlines()
@@ -220,6 +241,7 @@ class searchtools(object):
 
 
     def showSearch(self,show=None):
+        self.localDelete()
 
         medialist = self.getMediaList()
 
@@ -349,9 +371,10 @@ class searchtools(object):
         folderloc = (self.showsfolder+show) if searchtools.isShow is True else (self.moviesfolder+show)
         os.mkdir(folderloc)
         global showlogfile
-        showlogfile = "%s/%s log.txt" %(folderloc,show)
-        f = open(showlogfile,"w+")
-        f.close()
+        if searchtools.isShow is True:
+            showlogfile = "%s/%s log.txt" %(folderloc,show)
+            f = open(showlogfile,"w+")
+            f.close()
         self.addShowInfo(show)
 
     def onlyShow(self,show):
