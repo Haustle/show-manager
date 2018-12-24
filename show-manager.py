@@ -12,17 +12,11 @@ logger = Logger()
 s = authentication(projectFolder).main()
 if s != None: print s #prints if there is a missing file
 
-# print 'show-manager by Tyrus Miles'
+print 'show-manager by Tyrus Miles'
 
-newShows = []
+s = searchtools.searchtools(projectFolder)
 while True:
-    s = searchtools.searchtools(projectFolder)
-
-
-
-
-
-
+    
 
     command = (raw_input("\n\nEnter command (type help): ").lower()).split(" ")
     # try:

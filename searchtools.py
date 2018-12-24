@@ -288,29 +288,25 @@ class searchtools(object):
                 otherlist.append(rankings[x][0])
 
 
-        dash = "-"*15
-        print "\nTop Results"
-        print '-'*70
-        print "{:<8}{}\n".format("RANK","NAME")
-        # print dash
-
-
+        dash = "-"*70
         if len(rankinglist) > 0:
-            for z in range(len(rankinglist)):
-                print "%d \t%s" %(z+1, rankinglist[z])
-        else:
-            print 'none'
-
-        
-        # print dash
-        if len(otherlist) > 0:
-            print "\nSimilar Results"
+            print "\nTop Results"
             print '-'*70
+            print "{:<8}{}\n".format("RANK","NAME")
+            # print dash
+            if len(rankinglist) > 0:
+                for z in range(len(rankinglist)):
+                    print "%d \t%s" %(z+1, rankinglist[z])
+            print ''
+        
+        if len(otherlist) > 0:
+            print "\nOther Results"
+            print dash
             print "{:<8}{}\n".format("RANK","NAME")
             for y in range(len(otherlist)):
                 print "%d \t%s" %(y+len(rankinglist)+1, otherlist[y])
-        # else:
-            # print 'none'
+        if len(otherlist) == 0 and len(rankinglist) == 0:
+            print '\nNo results have been found in the database'
 
     def matchinglist(self,name):
         shows = self.getMediaList()
@@ -403,16 +399,16 @@ class searchtools(object):
 
 
             print ''
-            print '[1] Keep the original name:\t\'%s\'' %(show)
-            print '[2] Get a title case name:\t\'%s\'' %(self.grammarCheck(show))
+            print '[1] Keep the original name:\t%s' %(show)
+            print '[2] Get a title case name:\t%s' %(self.grammarCheck(show))
 
             foundshows = self.onlyShow(show) if searchtools.isShow else self.onlyMovie(show)
 
             if foundshows != None : 
                 whatisit = "show" if searchtools.isShow else "movie"
-                print'[3] Closest real {}:\t\t\'{}\''.format(whatisit,foundshows[0][0])
+                print'[3] Closest real {}:\t\t{}'.format(whatisit,foundshows[0][0])
                 # print len(foundshows)
-                print '\n...More options'
+                if len(foundshows) > 1 : print '\nMore'
 
 
             else: print '\n\n[!] Error: This show was not found in MovieDB database. Maybe try and re-spell'
@@ -420,29 +416,45 @@ class searchtools(object):
             
             # try:
             titleChoice = raw_input("\nChoose one of the above options: ")
-            if titleChoice == '1':
+
+            if (titleChoice == 'more') and (len(foundshows) > 1):
+                print ''
+                for x in range(1,len(foundshows)-1):
+                    # print foundshows[x][0]
+                    print("[{}]\t{}").format(3+x,foundshows[x][0])
+                enterabove = int(raw_input("Choose one of the above options (including 1-3): "))
+                if enterabove == 3:
+                    if self.exists(show) is False: print 'This option is coming soon'
+                elif enterabove == 2:
+                    if self.exists(self.grammarCheck(show)) is False: print 'This option is coming soon'
+                elif enterabove > 2 and enterabove <= len(foundshows)+2:
+                    enterabove -=3
+                    if self.exists(foundshows[enterabove][0]) is False:
+                        self.newDir(foundshows[enterabove][0])
+
+
+            elif titleChoice == '1':
                 if self.exists(show) == False:
+
+                    # THIS SHOULD NOT LEAD TO NEW DIR SHOULD LEAD NEED TO OTHER FUNCTION
+                    # WHERE YOU HAVE TO MANUALLY ADD
+
                     self.newDir(show)
 
             elif titleChoice == '2':
                 
                 if self.exists(self.grammarCheck(show)) == False:
+
+                    # THIS SHOULD NOT LEAD TO NEW DIR SHOULD LEAD NEED TO OTHER FUNCTION
+                    # WHERE YOU HAVE TO MANUALLY ADD
+                    
                     self.newDir(self.grammarCheck(show))
-                else:
-                    print '[!] Error: The show is already in the database'
                 
             elif titleChoice == '3' and foundshows!= None:
                 if self.exists(foundshows[0][0]) == False:
                     self.newDir(foundshows[0][0])
-                else:
-                    print '[!] Error: The show is already in the database'
-
-            elif titleChoice == 'more' and foundshows != None:
-                if len(foundshows) > 1:
-                    for x in range(len(foundshows)):
-                        print("({})\t{}").format(x+1,foundshows[x][0])
-                else:
-                    print '[!] Error: There are no more similar shows'
+                
+                
             
             else:
                 print 'That option is out of range'
@@ -451,7 +463,10 @@ class searchtools(object):
 
     def exists(self,something):
         medialist = [item.lower() for item in self.getMediaList()]
-        return True if something.lower() in medialist else False
+        if something.lower() in medialist: 
+            print '\n[!] Error: The show is already in the database'
+            return True
+        return False
 
 
     def getMediaList(self):
