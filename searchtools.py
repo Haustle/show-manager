@@ -542,6 +542,7 @@ class searchtools(object):
 
 
                         logger.writeLog(self.logtxt,message=logString)
+                
                     
             else:
                 print '%s path doesn\'t exist' %(show)
