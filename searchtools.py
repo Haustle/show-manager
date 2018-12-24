@@ -508,6 +508,7 @@ class searchtools(object):
                     imgfile = open((showpath+"cover.jpg"),'wb')
                     imgfile.write(imgDownload.read())
                     imgfile.close()
+                    if searchtools.isShow is False: print '[+] %s retreived' %(show)
 
                     if searchtools.isShow is True:
                         url = "https://api.themoviedb.org/3/tv/%d?api_key=%s&language=en-US" % (show_id,api)
