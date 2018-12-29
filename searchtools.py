@@ -5,8 +5,8 @@ from logger import Logger
 
 
 
-#Need to add folderBalance need to find a simpler way to do it
 class searchtools(object):
+    # IF SCRIPT IS DEALING WITH MOVIES OR SHOWS
     isShow = False
     
 
@@ -21,10 +21,11 @@ class searchtools(object):
         self.movietxt = root_folder + "movielist.txt"
         self.bookmarkmovies = self.moviesfolder + "[BOOKMARKED MOVIES].txt"
         
+    # RETURNS THE TEXT FILE PATH THAT CONTAINS LIST OF SHOWS/MOVIES IN A DIRECTORY
     def getTextFile(self):
         return self.movietxt if searchtools.isShow is False else self.showtxt
         
-        
+    # THIS FUNCTION CHECKS TO SEE IF A USER DELETED A MOVIE/SHOW LOCALLY (NOT WHILE SCRIPT WAS RUNNING)    
     def localDelete(self):
         currentTime = time.strftime("%c")
         with open(self.getTextFile(),'r') as f:
@@ -40,7 +41,7 @@ class searchtools(object):
                 l.close()
         
 
-
+    # TURNS A NAME OF A SHOW/MOVIE INTO PROPER TITLE CASE
     def grammarCheck(self,show):
         titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', show)
         showName = show
@@ -78,23 +79,30 @@ class searchtools(object):
             showName = showName.title()
         return showName
     
-    def showOptions(self,show):
-        logger = Logger()
+    # PRINT THE LIST OF OPTIONS DEPENDING ON IF THE SEARCH IS TOWARDS MOVIES OR SHOWS
+    def printOptions(self,name):
+        towards = "show" if searchtools.isShow else "movie"
         print '\n'*4
-        print show
+        print name
         print '-'*10
         print ''
-        print 'a. Print show directory details'
-        print 'b. Open the folder of the show'
-        print 'c. Check for missing Episodes'
-        print 'd. Bookmark this show'
-        print 'e. Delete the show'
+        print 'Print {} details'.format(towards)
+        print 'Open the folder of {}'.format(towards)
+        print 'Check for missing Episodes' if searchtools.isShow
+        print 'Bookmark this {}'.format(towards)
+        print 'Delete this {}'.format(towards)
+
+
+    def showOptions(self,show):
+        logger = Logger()
+        
+        self.printOptions()
         whatNext = raw_input("\nChoose one of the above options: ")
 
 
 
-
-        if whatNext.lower() == 'a' and searchtools.isShow:
+        # PRINT DETAILS OF THE MOVIE/SHOW
+        if whatNext.lower() == 'a':
             print 'Show Details : \'%s\'' %(show)
             filesInPath = sorted(os.listdir(self.showsfolder+show))
             # print filesInPath
@@ -116,7 +124,7 @@ class searchtools(object):
 
 
 
-
+        # WILL OPEN THE DIRECTORY OF THE FILE
         elif whatNext.lower() == 'b':
             print ('Opening {} \'folder\'...'.format(show))       
             subprocess.call(["open","-R", self.showsfolder+show+"/Season 1"])
@@ -124,13 +132,10 @@ class searchtools(object):
             print  self.showsfolder+show+"/"
             print 'We opened \'%s\'' % (show)
 
-        elif whatNext.lower() == 'c':
 
-            # Checking for new seasons and episodes
-            # Upon running this command tell the user how many episodes they are missing
-            # Then ask them if they'd like to add episodes to to a specific season or all
-            # Check if the season they want to add already has episodes
-            # Allow the user to enter '1-15 and 2-34' so they can download in groups (maybe limit them to 25 at a time)
+        # CHECKS THE FOLDER FOR MISSING EPISODES
+        elif whatNext.lower() == 'c' and searchtools.isShow:
+
 
             print 'SHOW UPDATE'
             print '\na. Check if all seasons are up to date'
@@ -139,20 +144,17 @@ class searchtools(object):
             options = raw_input("\nChoose one of the above options: ")
 
             
-            # options = raw_input(" ")
             filesInPath = sorted(os.listdir(self.showsfolder+show))
-
-            # Turn this into a function to just find out how many seasons there are
-            # Not sure how many times I've used this function
 
             seasonCount = []
             for file in filesInPath:
                 if file.startswith("Season "):
                     seasonCount.append(file)
 
-            showId = (self.onlyShow(show))[0][1]
-            # showId = showId[0][1]
+            showId = (self.tmdbShowResults(show))[0][1]
+
             
+            # CHECKS ALL FOLDERS FOR MISSING EPISODES
             if options == 'a':
                 firsttime = True
                 for x in range(1,len(seasonCount)+1):
@@ -169,7 +171,7 @@ class searchtools(object):
                         self.missingTable(x,missingEpisodes, firstime=firsttime)
                         firsttime = False
 
-
+            # CHECKS FOR MISSING EPISODES OF A SPECIFIC SEASON
             elif options == 'b':
                 try:
                     whatSeason = (raw_input("\nWhat season do you want to check?: "))
@@ -192,7 +194,7 @@ class searchtools(object):
                     print 'Can\'t check this season'
             
 
-
+        # BOOKMARKS THE SHOW OR MOVIE
         elif whatNext.lower() == 'd':
             if show in bookmarklist:
                 print '\nThis show is already bookmarked'
@@ -202,7 +204,7 @@ class searchtools(object):
 
 
 
-
+        # DELETES THE SHOW OR MOVIE
         elif whatNext.lower() == 'e':
             with open(self.bookmarktxt,'r') as f:
                 bookmarklist = [line.strip() for line in f]
@@ -239,7 +241,7 @@ class searchtools(object):
 
 
 
-
+    # FUNCTION THAT ACCEPTS ONE PARAMENTER A SHOW/MOVIE AND CHECKS DIRECTORIES FOR SIMILARLY NAMED
     def showSearch(self,show=None):
         self.localDelete()
 
@@ -248,6 +250,7 @@ class searchtools(object):
         rankinglist = []
         mightShow = []
 
+        # THIS CONDITION FOR WHEN NO FILE IN DIRECTORY
         if len(medialist) > 0:
             self.similarStrings(rankinglist,mightShow,show)
             if len(rankinglist) == 0 and len(mightShow) == 0:
@@ -269,17 +272,20 @@ class searchtools(object):
                         print '[!] Error: The number (%d) entered is out of index.' %(whatNum)
                 else:
                     self.likeToAdd(show)
-                    # print 'o wow'
+                    
         else:
             self.likeToAdd(show)
-                
-    def similarStrings(self,rankinglist,otherlist,show):
+    
 
+    # PRINTS OUT THE TWO RANKING LIST
+    def similarStrings(self,rankinglist,otherlist,show):
         rankings = self.matchinglist(show)
         norm_list_length = 21
         if len(rankings) < norm_list_length: norm_list_length = len(rankings)
 
         for x in range(norm_list_length):
+
+            # WEIGHTS TO DECIDE WHAT LIST SHOWS/MOVIES ARE PLACED ON
             if rankings[x][1] > 0.2:
                 rankinglist.append(rankings[x][0])
                 continue
@@ -289,16 +295,19 @@ class searchtools(object):
 
 
         dash = "-"*70
+
+        # PRINTS OUT THE TOP RESULTS
         if len(rankinglist) > 0:
             print "\nTop Results"
             print '-'*70
             print "{:<8}{}\n".format("RANK","NAME")
-            # print dash
+
             if len(rankinglist) > 0:
                 for z in range(len(rankinglist)):
                     print "%d \t%s" %(z+1, rankinglist[z])
             print ''
         
+        # PRINTS OUT THE OTHER RESULTS
         if len(otherlist) > 0:
             print "\nOther Results"
             print dash
@@ -308,6 +317,7 @@ class searchtools(object):
         if len(otherlist) == 0 and len(rankinglist) == 0:
             print '\nNo results have been found in the database'
 
+    # FUNCTIONS GOES THROUGH THE LIST OF SET MEDIA AND FINDS SIMILARITIES BETWEEN THE SHOWS
     def matchinglist(self,name):
         shows = self.getMediaList()
         shows.sort()
@@ -362,8 +372,8 @@ class searchtools(object):
                 print '\n[!] Error: String Similarity Failed!'
         
     
-
-    def newDir(self,show):
+    # FUNCTION RESPONSIBLE OF CREATING FOLDER DIRECTORY
+    def newDir(self,show,local=False):
         folderloc = (self.showsfolder+show) if searchtools.isShow is True else (self.moviesfolder+show)
         os.mkdir(folderloc)
         global showlogfile
@@ -371,9 +381,22 @@ class searchtools(object):
             showlogfile = "%s/%s log.txt" %(folderloc,show)
             f = open(showlogfile,"w+")
             f.close()
-        self.addShowInfo(show)
+        # DECIDES WHETHER TO CREATE A SPECIALIZED DIRECTORY OR ONE CREATED BY API
+        self.addShowInfo(show) if local is True else self.localShow(show)
 
-    def onlyShow(self,show):
+    # WHEN NO MOVIES/SHOWS ARE FOUND BUT THE USER STILL WANTS TO ADD THEM TO THE LIST.
+    def localShow(self,show):
+        folderloc = (self.showsfolder+show) if searchtools.isShow is True else (self.moviesfolder+show)
+        print 'Because this is a show created locally. We need to add some details to the show'
+        print 'Below are things that you need to edit manually: \n{}\n{}'.format("cover.jg","overview (edit in deails.txt)")
+        seasonAmount = raw_input("\nEnter the amount of seasons this show has: ")
+        if seasonAmount.isdigit():
+            for i in range(0,int(seasonAmount)):
+                newSeason = "Season %d" %(i+1)
+                os.mkdir(folderloc+newSeason)
+
+    # FUNCTION RETURNS LIST OF SHOWS FOUND IN TMDB SEARCH
+    def tmdbShowResults(self,show): 
         tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
         search = tmdb.Search()
         reponse = search.tv(query=show)
@@ -382,7 +405,9 @@ class searchtools(object):
             for x in range(len(search.results)):
                 list_results.append([((search.results[x])['name']).encode('utf-8'), search.results[x]['id']])
             return list_results
-    def onlyMovie(self,movie):
+
+    # FUNCTION RETURNS LIST OF MOVIES FOUND IN TMDB SEARCH
+    def tmdbMovieResults(self,movie):
         tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
         search = tmdb.Search()
         reponse = search.movie(query=movie)
@@ -392,37 +417,36 @@ class searchtools(object):
                 list_results.append([((search.results[x])['title']).encode('utf-8'), search.results[x]['id']])
             return list_results
 
-
+    # FUNCTION RESPONSIBLE DECIDING WHICH NAME WILL BE USED FOR DIRECTORY
     def likeToAdd(self,show):
         addShow = raw_input("Would you like to add \'%s\'?: " % show)
         if addShow.lower() == 'yes':
 
 
             print ''
-            print '[1] Keep the original name:\t%s' %(show)
-            print '[2] Get a title case name:\t%s' %(self.grammarCheck(show))
+            print '[1] Keep the original name (local):\t%s' %(show)
+            print '[2] Get a title case name (local):\t%s' %(self.grammarCheck(show))
 
-            foundshows = self.onlyShow(show) if searchtools.isShow else self.onlyMovie(show)
+            foundshows = self.tmdbShowResults(show) if searchtools.isShow else self.tmdbMovieResults(show)
 
             if foundshows != None : 
                 whatisit = "show" if searchtools.isShow else "movie"
-                print'[3] Closest real {}:\t\t{}'.format(whatisit,foundshows[0][0])
-                # print len(foundshows)
+                print'[3] Closest real {}(api):\t\t{}'.format(whatisit,foundshows[0][0])
                 if len(foundshows) > 1 : print '\nMore'
 
 
             else: print '\n\n[!] Error: This show was not found in MovieDB database. Maybe try and re-spell'
 
             
-            # try:
+
             titleChoice = raw_input("\nChoose one of the above options: ")
 
             if (titleChoice == 'more') and (len(foundshows) > 1):
                 print ''
                 for x in range(1,len(foundshows)-1):
-                    # print foundshows[x][0]
                     print("[{}]\t{}").format(3+x,foundshows[x][0])
-                enterabove = int(raw_input("Choose one of the above options (including 1-3): "))
+                enterabove = int(raw_input("\nChoose one of the above options (including 1-3): "))
+
                 if enterabove == 3:
                     if self.exists(show) is False: print 'This option is coming soon'
                 elif enterabove == 2:
@@ -435,20 +459,12 @@ class searchtools(object):
 
             elif titleChoice == '1':
                 if self.exists(show) == False:
-
-                    # THIS SHOULD NOT LEAD TO NEW DIR SHOULD LEAD NEED TO OTHER FUNCTION
-                    # WHERE YOU HAVE TO MANUALLY ADD
-
-                    self.newDir(show)
+                    self.newDir(show,local=True)
 
             elif titleChoice == '2':
-                
                 if self.exists(self.grammarCheck(show)) == False:
-
-                    # THIS SHOULD NOT LEAD TO NEW DIR SHOULD LEAD NEED TO OTHER FUNCTION
-                    # WHERE YOU HAVE TO MANUALLY ADD
-                    
-                    self.newDir(self.grammarCheck(show))
+                    show = self.grammarCheck(show)
+                    self.newDir(show,local=True)
                 
             elif titleChoice == '3' and foundshows!= None:
                 if self.exists(foundshows[0][0]) == False:
@@ -458,9 +474,8 @@ class searchtools(object):
             
             else:
                 print 'That option is out of range'
-            # except:
-            #     print 'That is not an option'
 
+    # FUNCTION CHECKS TO SEE IF THE DIRECTORY IS PRE-EXISTING
     def exists(self,something):
         medialist = [item.lower() for item in self.getMediaList()]
         if something.lower() in medialist: 
@@ -468,7 +483,7 @@ class searchtools(object):
             return True
         return False
 
-
+    # FUNCTION RETURNS EITHER LIST OF LOCAL MOVIES OR SHOWS DEPENDING ON WHAT USER SEARCHED
     def getMediaList(self):
         medialist = []
 
@@ -481,6 +496,7 @@ class searchtools(object):
         return self.forbiddenFiles(medialist)
         
 
+    # FUNCTION GOES THROUGH API TO FIND COVER, EPISODE NAMES, OVERVIEW AND SAVES THEM LOCALLY
     def addShowInfo(self,show):
         logger = Logger()
         global api 
@@ -536,7 +552,7 @@ class searchtools(object):
                             os.mkdir(seasonpath)
                             self.addEpisodes(show_id,seasonpath,y)
 
-                            #THIS WHERE THE EPISODES NEEDS TO BE ADDED FOR THE SHOW
+                            
 
 
                         print '[+] %s retreived' %(show)
@@ -561,14 +577,8 @@ class searchtools(object):
                     
             else:
                 print '%s path doesn\'t exist' %(show)
-        else:
-            print '[!] Error: Poster, overview, and season was not found for \'%s\' ' %(show)
-            seasonAmount = raw_input("Enter the amount of seasons this show has: ")
-            if seasonAmount.isdigit():
-                for i in range(0,int(seasonAmount)):
-                    newSeason = "Season %d" %(i+1)
-                    os.mkdir(showpath+newSeason)
-
+       
+    # FUNCTION CALLED CREATE DIRECTORIES OF EACH EPISODE IN EPISODELIST FUNCTION
     def addEpisodes(self,show_id,seasonpath,seasonNum):
         logger = Logger()
         epdetails = self.episodeList(seasonNum,show_id,losteps=False)
@@ -591,7 +601,7 @@ class searchtools(object):
                 continue
 
 
-
+    # FUNCTION GOES THROUGH TMDB API TO GET EPISODE NAMES AND RETURNS A LIST OF FORMATTED EPISODE NAMES
     def episodeList(self,seasonNum,show_id,losteps=True):
         api = '7e022dc2338ac2988670ddb93ccff401'
         url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,api)
@@ -616,7 +626,7 @@ class searchtools(object):
 
         return eplist
 
-    #Just to make sure lists don't contain any of these files 
+    # CHECKS A GIVEN LIST TO MAKE SURE THERE ARE NO FILES THAT SHOULDN'T BE THERE
     def forbiddenFiles(self, list_taken):
         newlist = list(list_taken)
     
@@ -625,12 +635,14 @@ class searchtools(object):
                 newlist.remove(newlist[newlist.index(file)])            
         return newlist
 
+    # FUNCTION THAT RECOGNIZES THE DIFFERENT ELEMENTS OF A FORMATTED EPISODE NAME
     def breakEpName(self, epname):
         indentifier = re.findall(r'E(\d+) - (.*)',epname)
         epnum = indentifier[0][0]
         epbane = indentifier[0][1]
         return epnum, epname
 
+    # FUNCTION THAT DISPLAYS TABLE OF MISSING EPISODES
     def missingTable(self,season,epnames,firstime=True):
         if firstime is True:
             print("\n{:<10} {:<10} {}").format("Season","EP #", "EP. NAME")
