@@ -9,7 +9,7 @@ from logger import Logger
 class searchtools(object):
     # IF SCRIPT IS DEALING WITH MOVIES OR SHOWS
     isShow = False
-    api = self.api
+    api = config.api_key
     
 
     def __init__(self,root_folder):
@@ -400,7 +400,7 @@ class searchtools(object):
 
     # FUNCTION RETURNS LIST OF SHOWS FOUND IN TMDB SEARCH
     def tmdbShowResults(self,show): 
-        tmdb.API_KEY = self.api
+        tmdb.API_KEY = searchtools.api
         search = tmdb.Search()
         reponse = search.tv(query=show)
         list_results = []
@@ -411,7 +411,7 @@ class searchtools(object):
 
     # FUNCTION RETURNS LIST OF MOVIES FOUND IN TMDB SEARCH
     def tmdbMovieResults(self,movie):
-        tmdb.API_KEY = self.api
+        tmdb.API_KEY = searchtools.api
         search = tmdb.Search()
         reponse = search.movie(query=movie)
         list_results = []
@@ -506,7 +506,7 @@ class searchtools(object):
     def addShowInfo(self,show):
         logger = Logger()
         global api 
-        api = self.api
+        api = searchtools.api
         search = tmdb.Search()
         count = 1
 
@@ -609,7 +609,7 @@ class searchtools(object):
 
     # FUNCTION GOES THROUGH TMDB API TO GET EPISODE NAMES AND RETURNS A LIST OF FORMATTED EPISODE NAMES
     def episodeList(self,seasonNum,show_id,losteps=True):
-        api = self.api
+        api = searchtools.api
         url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,api)
             
         eplist = []
