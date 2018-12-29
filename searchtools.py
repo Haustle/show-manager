@@ -1,13 +1,15 @@
-import os, re, subprocess, urllib, urllib2
+import os, re, subprocess, urllib, urllib2, config
 import tmdbsimple as tmdb
 import webbrowser, shutil, requests, time, ssl
 from logger import Logger
 
 
 
+
 class searchtools(object):
     # IF SCRIPT IS DEALING WITH MOVIES OR SHOWS
     isShow = False
+    api = config.api_key
     
 
     def __init__(self,root_folder):
@@ -88,7 +90,7 @@ class searchtools(object):
         print ''
         print 'Print {} details'.format(towards)
         print 'Open the folder of {}'.format(towards)
-        print 'Check for missing Episodes' if searchtools.isShow
+        if searchtools.isShow: print 'Check for missing Episodes'
         print 'Bookmark this {}'.format(towards)
         print 'Delete this {}'.format(towards)
 
@@ -96,7 +98,7 @@ class searchtools(object):
     def showOptions(self,show):
         logger = Logger()
         
-        self.printOptions()
+        self.printOptions(show)
         whatNext = raw_input("\nChoose one of the above options: ")
 
 
@@ -382,7 +384,8 @@ class searchtools(object):
             f = open(showlogfile,"w+")
             f.close()
         # DECIDES WHETHER TO CREATE A SPECIALIZED DIRECTORY OR ONE CREATED BY API
-        self.addShowInfo(show) if local is True else self.localShow(show)
+        print local
+        self.addShowInfo(show) if local is False else self.localShow(show)
 
     # WHEN NO MOVIES/SHOWS ARE FOUND BUT THE USER STILL WANTS TO ADD THEM TO THE LIST.
     def localShow(self,show):
@@ -397,7 +400,7 @@ class searchtools(object):
 
     # FUNCTION RETURNS LIST OF SHOWS FOUND IN TMDB SEARCH
     def tmdbShowResults(self,show): 
-        tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
+        tmdb.API_KEY = config.api_key
         search = tmdb.Search()
         reponse = search.tv(query=show)
         list_results = []
@@ -408,7 +411,7 @@ class searchtools(object):
 
     # FUNCTION RETURNS LIST OF MOVIES FOUND IN TMDB SEARCH
     def tmdbMovieResults(self,movie):
-        tmdb.API_KEY = '7e022dc2338ac2988670ddb93ccff401'
+        tmdb.API_KEY = config.api_key
         search = tmdb.Search()
         reponse = search.movie(query=movie)
         list_results = []
@@ -447,10 +450,13 @@ class searchtools(object):
                     print("[{}]\t{}").format(3+x,foundshows[x][0])
                 enterabove = int(raw_input("\nChoose one of the above options (including 1-3): "))
 
-                if enterabove == 3:
-                    if self.exists(show) is False: print 'This option is coming soon'
+                if enterabove == 1:
+                    if self.exists(show) is False: self.newDir(show,local=True)
+
                 elif enterabove == 2:
-                    if self.exists(self.grammarCheck(show)) is False: print 'This option is coming soon'
+                    show = self.grammarCheck(show)
+                    if self.exists(show) is False: self.newDir(show,local=True)
+
                 elif enterabove > 2 and enterabove <= len(foundshows)+2:
                     enterabove -=3
                     if self.exists(foundshows[enterabove][0]) is False:
@@ -500,7 +506,7 @@ class searchtools(object):
     def addShowInfo(self,show):
         logger = Logger()
         global api 
-        api = '7e022dc2338ac2988670ddb93ccff401'
+        api = config.api_key
         search = tmdb.Search()
         count = 1
 
@@ -603,7 +609,7 @@ class searchtools(object):
 
     # FUNCTION GOES THROUGH TMDB API TO GET EPISODE NAMES AND RETURNS A LIST OF FORMATTED EPISODE NAMES
     def episodeList(self,seasonNum,show_id,losteps=True):
-        api = '7e022dc2338ac2988670ddb93ccff401'
+        api = config.api_key
         url = "https://api.themoviedb.org/3/tv/{}/season/{}?api_key={}&language=en-US".format(show_id,seasonNum,api)
             
         eplist = []
