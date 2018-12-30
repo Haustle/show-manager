@@ -2,7 +2,7 @@ import os, re, subprocess, urllib, urllib2, config
 import tmdbsimple as tmdb
 import webbrowser, shutil, requests, time, ssl
 from logger import Logger
-
+from pprint import pprint
 
 
 
@@ -41,15 +41,26 @@ class searchtools(object):
                 l = open(self.logtxt,'a')
                 l.write(logString)
                 l.close()
+    
+    def jsonFormat(self,somelist):
         
+        data ={
+            "details": {
+                
+            }
+        }
+        detail = data["details"]
+        for line in somelist:
+            detail[line[0]] = line[1]
+        # pprint(data)
+        return data
 
     # TURNS A NAME OF A SHOW/MOVIE INTO PROPER TITLE CASE
     def grammarCheck(self,show):
         titleshit = re.findall(r'vs|the|and|of|at|by|down|for|from|in|into|like|near|off|on|into|to|with|till|when|yet|or|so|a', show)
         showName = show
         splitShow = showName.split(" ")
-        # searchtools.isMovie = True
-        # print searchtools.isMovie
+
         i = 0
         if titleshit > 0:
             for item in splitShow:
@@ -107,17 +118,16 @@ class searchtools(object):
         if whatNext.lower() == 'a':
             print 'Show Details : \'%s\'' %(show)
             filesInPath = sorted(os.listdir(self.showsfolder+show))
-            # print filesInPath
             seasonCount = []
             for file in filesInPath:
                 if file.startswith("Season "):
-                    # print file
+
                     seasonCount.append(file)
             print ''
             if len(seasonCount) > 0:
                 for season in seasonCount:
                     lenForSeason = len(os.listdir(self.showsfolder+show+'/'+season))
-                    # numOfEpisodes+= lenForSeason
+
                     print '%s: %d Episodes' %(season, lenForSeason)
             else:
                 print 'No seasons were found'
@@ -165,8 +175,7 @@ class searchtools(object):
                     season = "/Season {}".format(x)
                     episodes_in_folder = os.listdir(self.showsfolder+show+season)
                     missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
-                    # if len(missingEpisodes) == 0:
-                    #     print '\nThere are no missing episodes in \'Season {}\''.format(x)
+
                     if len(missingEpisodes)>0:
                         print ''
                         missingEpisodes = self.forbiddenFiles(missingEpisodes)
@@ -228,7 +237,7 @@ class searchtools(object):
             lastline = lastline[len(lastline)-1]
             lastLog = lastline.split(" ")
             if len(lastLog)>0:
-                # print lastLog
+
                 for part in lastLog:
                     # Because  [NEW SHOW] is split in half we're only checking for the first part
                     if part == '\t[NEW':
@@ -346,7 +355,7 @@ class searchtools(object):
                     if show == '[BOOKMARKED SHOWS].txt': continue
                     counter = 1
                     showParts = []
-                    # print 'mynow'
+                    
                     for x in range(len(show)):
                         partOfname = show[x:x+2]
                         showParts.append(partOfname)
@@ -356,7 +365,7 @@ class searchtools(object):
                         for y in range(len(showParts)):
                             if savedParts[x].lower() == showParts[y].lower() and (y not in notrange):
                                 notrange.append(y)
-                                # print show +" " + savedParts[x] + " " + showParts[y]
+                               
                                 counter +=1
                                 break
 
@@ -366,7 +375,7 @@ class searchtools(object):
 
 
                         rankings.append([show,points])
-                        # print notrange
+                        
 
                 rankings = sorted(rankings,key=lambda x: x[1], reverse=True)
                 return rankings
@@ -378,13 +387,14 @@ class searchtools(object):
     def newDir(self,show,local=False):
         folderloc = (self.showsfolder+show) if searchtools.isShow is True else (self.moviesfolder+show)
         os.mkdir(folderloc)
+        os.mkdir(folderloc+"/Content")
         global showlogfile
         if searchtools.isShow is True:
             showlogfile = "%s/%s log.txt" %(folderloc,show)
             f = open(showlogfile,"w+")
             f.close()
         # DECIDES WHETHER TO CREATE A SPECIALIZED DIRECTORY OR ONE CREATED BY API
-        print local
+    
         self.addShowInfo(show) if local is False else self.localShow(show)
 
     # WHEN NO MOVIES/SHOWS ARE FOUND BUT THE USER STILL WANTS TO ADD THEM TO THE LIST.
@@ -396,7 +406,7 @@ class searchtools(object):
         if seasonAmount.isdigit():
             for i in range(0,int(seasonAmount)):
                 newSeason = "Season %d" %(i+1)
-                os.mkdir(folderloc+newSeason)
+                os.mkdir(folderloc+"/Content/"+newSeason)
 
     # FUNCTION RETURNS LIST OF SHOWS FOUND IN TMDB SEARCH
     def tmdbShowResults(self,show): 
@@ -482,9 +492,9 @@ class searchtools(object):
                 print 'That option is out of range'
 
     # FUNCTION CHECKS TO SEE IF THE DIRECTORY IS PRE-EXISTING
-    def exists(self,something):
+    def exists(self,show):
         medialist = [item.lower() for item in self.getMediaList()]
-        if something.lower() in medialist: 
+        if show.lower() in medialist: 
             print '\n[!] Error: The show is already in the database'
             return True
         return False
@@ -516,9 +526,24 @@ class searchtools(object):
 
         posterBase = 'https://image.tmdb.org/t/p/w500'
         if len(search.results) > 0:
-            something = search.results[0]
+            topresult = search.results[0]
            
-            overview = something['overview']
+
+            listforJson = []
+            listforJson.append(["overview",topresult['overview']])
+            listforJson.append(["poster_path",topresult["poster_path"]])
+            listforJson.append(["release_date", (topresult["first_air_date"] if searchtools.isShow else topresult["release_date"])])
+            listforJson.append(["language",topresult["original_language"]])
+            listforJson.append(["id",topresult['id']])
+            listforJson.append(["locally_made",False])
+
+            self.jsonFormat(listforJson)
+
+
+
+
+
+
             overviewpath = ""
             if searchtools.isShow is True:
                 overviewpath = self.showsfolder+show+"/overview.txt"
@@ -526,8 +551,7 @@ class searchtools(object):
                 overviewpath = self.moviesfolder+show+"/overview.txt"
             logger.writeLog(overviewpath, message=overview, overview=True)
 
-            show_id = (something['id'])
-            poster = (something['poster_path'])
+            
             if poster is None:
                 print '%s contained None' %(show)
 
@@ -538,7 +562,7 @@ class searchtools(object):
                     print '\'%s\' already has a picture' %(show)
 
                 else:
-                    # ,(showpath+"cover.jpg")
+                    
                     context = ssl._create_unverified_context()
                     imgDownload = urllib2.urlopen(posterLink, context=context)
 
@@ -551,10 +575,15 @@ class searchtools(object):
                         url = "https://api.themoviedb.org/3/tv/%d?api_key=%s&language=en-US" % (show_id,api)
                         payload = "{}"
                         json_data = requests.get(url).json()
+
+
+
+
+
                         seasonnum = json_data['number_of_seasons']
                         for y in range(1,seasonnum+1):
                             newSeason = "Season {}".format(y)
-                            seasonpath = showpath+newSeason
+                            seasonpath = showpath+"Content/"+newSeason
                             os.mkdir(seasonpath)
                             self.addEpisodes(show_id,seasonpath,y)
 
@@ -562,6 +591,7 @@ class searchtools(object):
 
 
                         print '[+] %s retreived' %(show)
+
                         currentTime = time.strftime("%c")
                         logString = "%s \t[NEW SHOW] %s (%d seasons)\n" % (currentTime, show, seasonnum)
                         l = open(self.logtxt,"r")
@@ -620,7 +650,6 @@ class searchtools(object):
 
             epnum = int(episode["episode_number"])
             epname = episode["name"].encode('utf-8')
-            # print type(epnum), type(epname)
             if epnum < 10: epnum = "0"+str(epnum)
 
 
