@@ -1,6 +1,6 @@
 import os, re, subprocess, urllib, urllib2, config
 import tmdbsimple as tmdb
-import webbrowser, shutil, requests, time, ssl
+import webbrowser, shutil, requests, time, ssl, json
 from logger import Logger
 from pprint import pprint
 
@@ -108,7 +108,6 @@ class searchtools(object):
 
     def showOptions(self,show):
         logger = Logger()
-        
         self.printOptions(show)
         whatNext = raw_input("\nChoose one of the above options: ")
 
@@ -117,12 +116,7 @@ class searchtools(object):
         # PRINT DETAILS OF THE MOVIE/SHOW
         if whatNext.lower() == 'a':
             print 'Show Details : \'%s\'' %(show)
-            filesInPath = sorted(os.listdir(self.showsfolder+show))
-            seasonCount = []
-            for file in filesInPath:
-                if file.startswith("Season "):
-
-                    seasonCount.append(file)
+            seasonCount = sorted(os.listdir(self.showsfolder+show+"/Content"))            
             print ''
             if len(seasonCount) > 0:
                 for season in seasonCount:
@@ -156,12 +150,7 @@ class searchtools(object):
             options = raw_input("\nChoose one of the above options: ")
 
             
-            filesInPath = sorted(os.listdir(self.showsfolder+show))
-
-            seasonCount = []
-            for file in filesInPath:
-                if file.startswith("Season "):
-                    seasonCount.append(file)
+            seasonCount = sorted(os.listdir(self.showsfolder+show+"/Content"))
 
             showId = (self.tmdbShowResults(show))[0][1]
 
@@ -537,25 +526,22 @@ class searchtools(object):
             listforJson.append(["id",topresult['id']])
             listforJson.append(["locally_made",False])
 
-            self.jsonFormat(listforJson)
+            jsontext = self.jsonFormat(listforJson)
+            with open(showpath+"details.json","w") as f:
+                sometext = json.dumps(jsontext,indent=4)
+                f.write(sometext)
+                f.close()
 
 
 
 
 
-
-            overviewpath = ""
-            if searchtools.isShow is True:
-                overviewpath = self.showsfolder+show+"/overview.txt"
-            else:
-                overviewpath = self.moviesfolder+show+"/overview.txt"
-            logger.writeLog(overviewpath, message=overview, overview=True)
 
             
-            if poster is None:
+            if topresult["poster_path"] is None:
                 print '%s contained None' %(show)
 
-            posterLink = posterBase + poster
+            posterLink = posterBase + topresult["poster_path"]
 
             if os.path.isdir(showpath) == True:
                 if os.path.exists(showpath+"cover.jpg") == True:
@@ -572,7 +558,7 @@ class searchtools(object):
                     if searchtools.isShow is False: print '[+] %s retreived' %(show)
 
                     if searchtools.isShow is True:
-                        url = "https://api.themoviedb.org/3/tv/%d?api_key=%s&language=en-US" % (show_id,api)
+                        url = "https://api.themoviedb.org/3/tv/%d?api_key=%s&language=en-US" % (topresult["id"],api)
                         payload = "{}"
                         json_data = requests.get(url).json()
 
@@ -585,7 +571,7 @@ class searchtools(object):
                             newSeason = "Season {}".format(y)
                             seasonpath = showpath+"Content/"+newSeason
                             os.mkdir(seasonpath)
-                            self.addEpisodes(show_id,seasonpath,y)
+                            self.addEpisodes(topresult["id"],seasonpath,y)
 
                             
 
