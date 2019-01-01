@@ -25,7 +25,7 @@ class authentication(object):
 
             if os.path.exists(dir) is False:
                 # print("Dir exists: {}\n").format("Missing", dir)
-                filename = (dir.split("/"))
+                filename = (dir.split(os.sep))
                 lookingfor = filename[-1]
                 if lookingfor == '':
                     lookingfor = filename[-2]

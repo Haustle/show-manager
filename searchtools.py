@@ -14,24 +14,24 @@ class searchtools(object):
 
     def __init__(self,root_folder):
 
-        self.showsfolder = root_folder + "shows/"
-        self.showtxt = root_folder + "showlist.txt"
-        self.bookmarktxt = self.showsfolder + "[BOOKMARKED SHOWS].txt"
-        self.logtxt = root_folder + "log.txt"
-        self.downfolder = root_folder+"downloads"
-        self.moviesfolder = root_folder + "movies/"
-        self.movietxt = root_folder + "movielist.txt"
-        self.bookmarkmovies = self.moviesfolder + "[BOOKMARKED MOVIES].txt"
+        self.showsfolder = os.path.normpath(root_folder + "shows/")
+        self.showtxt = os.path.normpath(root_folder + "showlist.txt")
+        self.bookmarktxt = os.path.normpath(self.showsfolder + "[BOOKMARKED SHOWS].txt")
+        self.logtxt = os.path.normpath(root_folder + "log.txt")
+        self.downfolder = os.path.normpath(root_folder+"downloads")
+        self.moviesfolder = os.path.normpath(root_folder + "movies/")
+        self.movietxt = os.path.normpath(root_folder + "movielist.txt")
+        self.bookmarkmovies = os.path.normpath(self.moviesfolder + "[BOOKMARKED MOVIES].txt")
         
     # RETURNS THE TEXT FILE PATH THAT CONTAINS LIST OF SHOWS/MOVIES IN A DIRECTORY
     def getTextFile(self):
-        return self.movietxt if searchtools.isShow is False else self.showtxt
+        return os.path.normpath(self.movietxt) if searchtools.isShow is False else os.path.normpath(self.showtxt)
         
     # THIS FUNCTION CHECKS TO SEE IF A USER DELETED A MOVIE/SHOW LOCALLY (NOT WHILE SCRIPT WAS RUNNING)    
     
     def localDelete(self):
         currentTime = time.strftime("%c")
-        with open(self.getTextFile(),'r') as f:
+        with open(os.path.normpath(self.getTextFile()),'r') as f:
             logShowList = [line.strip() for line in f]
 
         folderlist = self.getMediaList()
@@ -117,11 +117,11 @@ class searchtools(object):
         # PRINT DETAILS OF THE MOVIE/SHOW
         if whatNext.lower() == 'a':
             print 'Show Details : \'%s\'' %(show)
-            seasonCount = sorted(os.listdir(self.showsfolder+show+"/Content"))            
+            seasonCount = sorted(os.listdir(os.path.normpath(self.showsfolder+show+"/Content")))            
             print ''
             if len(seasonCount) > 0:
                 for season in seasonCount:
-                    lenForSeason = len(os.listdir(self.showsfolder+show+'/'+season))
+                    lenForSeason = len(os.listdir(os.path.normpath(self.showsfolder+show+'/'+season)))
 
                     print '%s: %d Episodes' %(season, lenForSeason)
             else:
@@ -134,9 +134,9 @@ class searchtools(object):
         # WILL OPEN THE DIRECTORY OF THE FILE
         elif whatNext.lower() == 'b':
             print ('Opening {} \'folder\'...'.format(show))       
-            subprocess.call(["open","-R", self.showsfolder+show+"/Season 1"])
+            subprocess.call(["open","-R", os.path.normpath(self.showsfolder+show+"/Season 1")])
             print " "
-            print  self.showsfolder+show+"/"
+            print  os.path.normpath(self.showsfolder+show+"/")
             print 'We opened \'%s\'' % (show)
 
 
@@ -151,7 +151,7 @@ class searchtools(object):
             options = raw_input("\nChoose one of the above options: ")
 
             
-            seasonCount = sorted(os.listdir(self.showsfolder+show+"/Content"))
+            seasonCount = sorted(os.listdir(os.path.normpath(self.showsfolder+show+"/Content")))
 
             showId = (self.tmdbShowResults(show))[0][1]
 
@@ -163,7 +163,7 @@ class searchtools(object):
                     missingEpisodes = []
                     full_season_list = self.episodeList(x,showId,losteps=True)
                     season = "/Season {}".format(x)
-                    episodes_in_folder = os.listdir(self.showsfolder+show+season)
+                    episodes_in_folder = os.listdir(os.path.normpath(self.showsfolder+show+season))
                     missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
 
                     if len(missingEpisodes)>0:
@@ -180,7 +180,7 @@ class searchtools(object):
                     if whatSeason.isdigit() and int(whatSeason) <= seasonCount:
                         full_season_list = self.episodeList(int(whatSeason),showId,losteps=True)
                         season = "/Season {}".format(whatSeason)
-                        episodes_in_folder = os.listdir(self.showsfolder+show+season)
+                        episodes_in_folder = os.path.normpath(os.listdir(self.showsfolder+show+season))
                         missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
                         self.forbiddenFiles(missingEpisodes)
                         if len(missingEpisodes) == 0:
@@ -215,7 +215,7 @@ class searchtools(object):
                 print bookmarklist
 
             print '\nDeleting \'%s\'...' %(show)
-            shutil.rmtree(self.showsfolder+show)
+            shutil.rmtree(os.path.normpath(self.showsfolder+show))
 
             currentTime = time.strftime("%c")
             log = self.logtxt
@@ -375,9 +375,36 @@ class searchtools(object):
     
     # FUNCTION RESPONSIBLE OF CREATING FOLDER DIRECTORY
     def newDir(self,show,local=False):
-        folderloc = (self.showsfolder+show) if searchtools.isShow is True else (self.moviesfolder+show)
+        folderloc = (self.showsfolder) if searchtools.isShow is True else (self.moviesfolder)
+        print folderloc
+
+
+
+
+
+
+        # print os.path.exists(folderloc)
+        folderloc = os.path.join(folderloc,show)
+        print folderloc
+        # folderloc = os.path.normpath(folderloc)
+        # print folderloc
+        # print repr(folderloc)
+        # print repr(os.path.normpath(folderloc))
         os.mkdir(folderloc)
-        os.mkdir(folderloc+"/Content")
+        # os.mkdir(os.path.normpath(folderloc+"/Content"))
+
+
+
+
+
+
+
+
+
+
+
+
+
         global showlogfile
         if searchtools.isShow is True:
             showlogfile = "%s/%s log.txt" %(folderloc,show)
@@ -396,7 +423,7 @@ class searchtools(object):
         if seasonAmount.isdigit():
             for i in range(0,int(seasonAmount)):
                 newSeason = "Season %d" %(i+1)
-                os.mkdir(folderloc+"/Content/"+newSeason)
+                os.mkdir(os.path.normpath(folderloc+"/Content/"+newSeason))
 
     # FUNCTION RETURNS LIST OF SHOWS FOUND IN TMDB SEARCH
     def tmdbShowResults(self,show): 
@@ -494,9 +521,9 @@ class searchtools(object):
         medialist = []
 
         if searchtools.isShow:
-            medialist = os.listdir(self.showsfolder)        
+            medialist = os.listdir(os.path.normpath(self.showsfolder))        
         else:
-            medialist = os.listdir(self.moviesfolder)
+            medialist = os.listdir(os.path.normpath(self.moviesfolder))
 
         # print medialist
         return self.forbiddenFiles(medialist)
@@ -512,7 +539,7 @@ class searchtools(object):
 
        
         response = search.tv(query=show) if searchtools.isShow is True else search.movie(query=show)
-        showpath = (self.showsfolder+show+"/") if searchtools.isShow is True else (self.moviesfolder+show+"/")
+        showpath = (os.path.normpath(self.showsfolder+show+"/")) if searchtools.isShow is True else (os.path.normpath(self.moviesfolder+show+"/"))
 
         posterBase = 'https://image.tmdb.org/t/p/w500'
         if len(search.results) > 0:
@@ -528,7 +555,7 @@ class searchtools(object):
             listforJson.append(["locally_made",False])
 
             jsontext = self.jsonFormat(listforJson)
-            with open(showpath+"details.json","w") as f:
+            with open(os.path.join(showpath,"details.json"),"w") as f:
                 sometext = json.dumps(jsontext,indent=4)
                 f.write(sometext)
                 f.close()
@@ -545,7 +572,7 @@ class searchtools(object):
             posterLink = posterBase + topresult["poster_path"]
 
             if os.path.isdir(showpath) == True:
-                if os.path.exists(showpath+"cover.jpg") == True:
+                if os.path.exists(os.path.normpath(showpath+"cover.jpg")) == True:
                     print '\'%s\' already has a picture' %(show)
 
                 else:
@@ -553,7 +580,7 @@ class searchtools(object):
                     context = ssl._create_unverified_context()
                     imgDownload = urllib2.urlopen(posterLink, context=context)
 
-                    imgfile = open((showpath+"cover.jpg"),'wb')
+                    imgfile = open(os.path.normpath(showpath+"cover.jpg"),'wb')
                     imgfile.write(imgDownload.read())
                     imgfile.close()
                     if searchtools.isShow is False: print '[+] %s retreived' %(show)
@@ -571,7 +598,7 @@ class searchtools(object):
                         for y in range(1,seasonnum+1):
                             newSeason = "Season {}".format(y)
                             seasonpath = showpath+"Content/"+newSeason
-                            os.mkdir(seasonpath)
+                            os.mkdir(os.path.normpath(seasonpath))
                             self.addEpisodes(topresult["id"],seasonpath,y)
 
                             
@@ -610,8 +637,8 @@ class searchtools(object):
             ep_name = epdetails[x][0]
             ep_over = epdetails[x][1]
 
-            newepfolder = seasonpath+"/"+ep_name
-            newoverview = newepfolder+"/overview.txt"
+            newepfolder = os.path.normpath(seasonpath+"/"+ep_name)
+            newoverview = os.path.normpath(newepfolder+"/overview.txt")
 
             try:
                 os.mkdir(newepfolder)

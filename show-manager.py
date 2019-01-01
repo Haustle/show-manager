@@ -5,7 +5,8 @@ from logger import Logger
 
 
 # the root folder
-projectFolder = os.getcwd()+"/"
+projectFolder = (os.getcwd()+"/")
+print projectFolder
 logger = Logger()
 
 
@@ -73,21 +74,21 @@ while True:
 
 
                 #This is for if the user only inputs 's -m' or 's -s'
-                else:
-                    print 'What do you want to search for? '
-                    print 'a. Shows\nb. Movies'
-                    answer = raw_input("Enter one of the options").lower()
-                    if answer == 'a':
+                elif len(command) == 2:
+                    # print 'What do you want to search for? '
+                    # print 'a. Shows\nb. Movies'
+                    # answer = raw_input("Enter one of the options").lower()
+                    if command[1] == '-s':
                         askShow = raw_input("What show do you want to search for: ")
                         searchtools.isShow = True
                         s.showSearch(show=askShow)
                         
 
-                    elif answer == 'b':
+                    elif command[1] == '-m':
                         
                         askMovie = raw_input("What movie do you want to search for: ")
                         searchtools.isShow = False
-                        s.showSearch(movie=askMovie)
+                        s.showSearch(show=askMovie)
                         
                     else:
                         print 'This is not an option'
