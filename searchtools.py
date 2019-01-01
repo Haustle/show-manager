@@ -28,6 +28,7 @@ class searchtools(object):
         return self.movietxt if searchtools.isShow is False else self.showtxt
         
     # THIS FUNCTION CHECKS TO SEE IF A USER DELETED A MOVIE/SHOW LOCALLY (NOT WHILE SCRIPT WAS RUNNING)    
+    
     def localDelete(self):
         currentTime = time.strftime("%c")
         with open(self.getTextFile(),'r') as f:

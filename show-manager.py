@@ -1,7 +1,8 @@
 import os
-import searchtools
+import searchtools, time
 from authentication import authentication
 from logger import Logger
+
 
 # the root folder
 projectFolder = os.getcwd()+"/"
@@ -9,9 +10,11 @@ logger = Logger()
 
 
 # Authenticates and makes sure all files are in the current directory
-s = authentication(projectFolder).main()
-if s != None: print s #prints if there is a missing file
+s = authentication(projectFolder)
+if s.mainFiles() != None: print s #prints if there is a missing file
 
+time.sleep(1)
+s.showFiles(isShow=True)
 print 'show-manager by Tyrus Miles'
 
 s = searchtools.searchtools(projectFolder)
@@ -62,8 +65,6 @@ while True:
                         askShow = " ".join(command[2:])
                         searchtools.searchtools.isShow = True
                         s.showSearch(show=askShow)
-                        
-                            
 
                     else:
                         askMovie = " ".join(command[2:])
