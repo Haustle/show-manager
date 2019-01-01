@@ -1,6 +1,6 @@
 # import os.path
 import os
-from searchtools import searchtools
+import searchtools
 
 
 # Purpose of this class is to run and make sure all the required files are in the projcted places
@@ -9,13 +9,18 @@ from searchtools import searchtools
 
 
 class authentication(object):
-    def __init__(self,root_folder):
-        self.dirList = (searchtools(root_folder)).__dict__.values()
 
-    def main(self):
+    def __init__(self,root_folder):
+
+        self.root_folder = root_folder
+        self.showsfolder = root_folder+"shows/"
+        self.moviesfolder = root_folder+"movies/"
+
+    def mainFiles(self):
+        dirList = (searchtools.searchtools(self.root_folder)).__dict__.values()
 
         missing = []
-        for dir in self.dirList:
+        for dir in dirList:
             exists = os.path.exists(dir)
 
             if os.path.exists(dir) is False:
@@ -41,7 +46,7 @@ class authentication(object):
                 continue
 
             else:
-                if self.dirList[-1] == dir: pass
+                if dirList[-1] == dir: pass
                 else: continue
 
             if len(missing) != 0:
@@ -60,5 +65,23 @@ class authentication(object):
         except:
             print 'Error: Something went wrong trying to identify the directory'
 
+    def showFiles(self, isShow=True):
+        decidepath = self.showsfolder if isShow else self.moviesfolder
+        for name in os.listdir(decidepath):
+            path = self.showsfolder+name if isShow else self.moviesfolder+name
 
+            if os.path.isdir(path):
+                pathlist = os.listdir(path)
 
+                official_path = ["Content","cover.jpg","details.json"]
+                if isShow: official_path.append("{} log.txt".format(name))
+
+                path_compare = list( set(pathlist) ^ set(official_path))
+                if len(path_compare) != 0:
+                    print("\n{} (missing files)").format(name)
+                    print '-'*80
+                    for x in range(1,len(path_compare)+1):
+
+                        reason = "MISSING" if path_compare[x-1] not in pathlist else "RANDOM FILE"
+                        print "{:<5} {:<20} {:>50}".format(x,path_compare[x-1],reason)
+                    
