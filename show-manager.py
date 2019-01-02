@@ -6,16 +6,16 @@ from logger import Logger
 
 # the root folder
 projectFolder = (os.getcwd()+"/")
-print projectFolder
 logger = Logger()
 
 
 # Authenticates and makes sure all files are in the current directory
 s = authentication(projectFolder)
-if s.mainFiles() != None: print s #prints if there is a missing file
+missingMainfiles = s.mainFiles()
+if missingMainfiles != None: print missingMainfiles #prints if there is a missing file
 
 time.sleep(1)
-s.showFiles(isShow=True)
+# s.showFiles(isShow=True)
 print 'show-manager by Tyrus Miles'
 
 s = searchtools.searchtools(projectFolder)
@@ -73,11 +73,9 @@ while True:
                         s.showSearch(show=askMovie)
 
 
-                #This is for if the user only inputs 's -m' or 's -s'
+
                 elif len(command) == 2:
-                    # print 'What do you want to search for? '
-                    # print 'a. Shows\nb. Movies'
-                    # answer = raw_input("Enter one of the options").lower()
+
                     if command[1] == '-s':
                         askShow = raw_input("What show do you want to search for: ")
                         searchtools.isShow = True

@@ -18,43 +18,53 @@ class authentication(object):
 
     def mainFiles(self):
         dirList = (searchtools.searchtools(self.root_folder)).__dict__.values()
-
         missing = []
-        for dir in dirList:
-            exists = os.path.exists(dir)
+        # print 'The number of directories being searched: {}'.format(len(dirList))
+        for dire in dirList:
+            # print 'This is the list of missing directories: {}'.format(missing)
+            
+            exists = os.path.exists(dire)
 
-            if os.path.exists(dir) is False:
+            if os.path.exists(dire) is False:
                 # print("Dir exists: {}\n").format("Missing", dir)
-                filename = (dir.split(os.sep))
+                filename = (dire.split(os.sep))
                 lookingfor = filename[-1]
                 if lookingfor == '':
                     lookingfor = filename[-2]
                 
 
                 if self.isTextDoc(lookingfor) is True: 
-                    f = open(dir,'w')
+                    f = open(dire,'w')
                     f.close()
                     lookingfor += " > text file"
                     
                     
                 else:
-                    os.mkdir(dir)
+                    os.mkdir(dire)
                     lookingfor+= " > folder"
                     
-
                 missing.append(lookingfor)
+                # print missing
                 continue
 
             else:
-                if dirList[-1] == dir: pass
+
+                if dirList[-1] == dire:
+                    print 'This is the end'
+                    pass
                 else: continue
 
-            if len(missing) != 0:
+            
+            # print 'This is the length of missing: {}'.format(len(missing))
+            if len(missing) > 0:
                 missingstr = "Number of missing files: {}\n".format(len(missing))
                 for x in range(len(missing)):
                     missingstr += "\n[+] {}".format(missing[x])
                 return missingstr
             
+
+
+
 
     def isTextDoc(self,dir):
         try:
@@ -64,6 +74,11 @@ class authentication(object):
             return False
         except:
             print 'Error: Something went wrong trying to identify the directory'
+
+
+
+
+
 
     def showFiles(self, isShow=True):
         decidepath = self.showsfolder if isShow else self.moviesfolder

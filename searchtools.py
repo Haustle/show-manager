@@ -14,14 +14,14 @@ class searchtools(object):
 
     def __init__(self,root_folder):
 
-        self.showsfolder = os.path.normpath(root_folder + "shows/")
-        self.showtxt = os.path.normpath(root_folder + "showlist.txt")
-        self.bookmarktxt = os.path.normpath(self.showsfolder + "[BOOKMARKED SHOWS].txt")
-        self.logtxt = os.path.normpath(root_folder + "log.txt")
-        self.downfolder = os.path.normpath(root_folder+"downloads")
-        self.moviesfolder = os.path.normpath(root_folder + "movies/")
-        self.movietxt = os.path.normpath(root_folder + "movielist.txt")
-        self.bookmarkmovies = os.path.normpath(self.moviesfolder + "[BOOKMARKED MOVIES].txt")
+        self.showsfolder = os.path.join(root_folder,"shows")
+        self.showtxt = os.path.join(root_folder,"showlist.txt")
+        self.bookmarktxt = os.path.join(self.showsfolder,"[BOOKMARKED SHOWS].txt")
+        self.logtxt = os.path.join(root_folder,"log.txt")
+        self.downfolder = os.path.join(root_folder,"downloads")
+        self.moviesfolder = os.path.join(root_folder ,"movies")
+        self.movietxt = os.path.join(root_folder ,"movielist.txt")
+        self.bookmarkmovies = os.path.join(self.moviesfolder,"[BOOKMARKED MOVIES].txt")
         
     # RETURNS THE TEXT FILE PATH THAT CONTAINS LIST OF SHOWS/MOVIES IN A DIRECTORY
     def getTextFile(self):
@@ -610,7 +610,7 @@ class searchtools(object):
        
     # FUNCTION CALLED CREATE DIRECTORIES OF EACH EPISODE IN EPISODELIST FUNCTION
     def addEpisodes(self,show_id,seasonpath,seasonNum):
-        print 'This is the season path in addEpisodes: {}'.format(seasonpath)
+        # print 'This is the season path in addEpisodes: {}'.format(seasonpath)
         logger = Logger()
         epdetails = self.episodeList(seasonNum,show_id,losteps=False)
         for x in range(len(epdetails)):
