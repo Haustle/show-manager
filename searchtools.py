@@ -151,7 +151,7 @@ class searchtools(object):
             options = raw_input("\nChoose one of the above options: ")
 
             
-            seasonCount = sorted(os.listdir(os.path.normpath(self.showsfolder+show+"/Content")))
+            seasonCount = sorted(os.listdir(os.path.join(self.showsfolder,show,"Content")))
 
             showId = (self.tmdbShowResults(show))[0][1]
 
@@ -163,7 +163,7 @@ class searchtools(object):
                     missingEpisodes = []
                     full_season_list = self.episodeList(x,showId,losteps=True)
                     season = "/Season {}".format(x)
-                    episodes_in_folder = os.listdir(os.path.normpath(self.showsfolder+show+season))
+                    episodes_in_folder = os.listdir(os.path.join(self.showsfolder,show,season))
                     missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
 
                     if len(missingEpisodes)>0:
@@ -180,7 +180,7 @@ class searchtools(object):
                     if whatSeason.isdigit() and int(whatSeason) <= seasonCount:
                         full_season_list = self.episodeList(int(whatSeason),showId,losteps=True)
                         season = "/Season {}".format(whatSeason)
-                        episodes_in_folder = os.path.normpath(os.listdir(self.showsfolder+show+season))
+                        episodes_in_folder = (os.listdir(os.path.join(self.showsfolder,show,season)))
                         missingEpisodes = set(full_season_list) ^ set(episodes_in_folder)
                         self.forbiddenFiles(missingEpisodes)
                         if len(missingEpisodes) == 0:
@@ -376,33 +376,9 @@ class searchtools(object):
     # FUNCTION RESPONSIBLE OF CREATING FOLDER DIRECTORY
     def newDir(self,show,local=False):
         folderloc = (self.showsfolder) if searchtools.isShow is True else (self.moviesfolder)
-        print folderloc
-
-
-
-
-
-
-        # print os.path.exists(folderloc)
         folderloc = os.path.join(folderloc,show)
-        print folderloc
-        # folderloc = os.path.normpath(folderloc)
-        # print folderloc
-        # print repr(folderloc)
-        # print repr(os.path.normpath(folderloc))
         os.mkdir(folderloc)
         os.mkdir(os.path.join(folderloc,"Content"))
-
-
-
-
-
-
-
-
-
-
-
 
 
         global showlogfile
@@ -556,8 +532,8 @@ class searchtools(object):
 
             jsontext = self.jsonFormat(listforJson)
             directory = os.path.join(showpath,"details.json")
-            print 'This is the current showpath: {}'.format(showpath)
-            print 'This is the projected JSON dir: {}'.format(directory)
+            # print 'This is the current showpath: {}'.format(showpath)
+            # print 'This is the projected JSON dir: {}'.format(directory)
 
             with open(os.path.join(showpath,"details.json"),"w") as f:
                 sometext = json.dumps(jsontext,indent=4)
@@ -634,6 +610,7 @@ class searchtools(object):
        
     # FUNCTION CALLED CREATE DIRECTORIES OF EACH EPISODE IN EPISODELIST FUNCTION
     def addEpisodes(self,show_id,seasonpath,seasonNum):
+        print 'This is the season path in addEpisodes: {}'.format(seasonpath)
         logger = Logger()
         epdetails = self.episodeList(seasonNum,show_id,losteps=False)
         for x in range(len(epdetails)):
@@ -641,7 +618,8 @@ class searchtools(object):
             ep_name = epdetails[x][0]
             ep_over = epdetails[x][1]
 
-            newepfolder = os.path.join(seasonpath,os.sep,ep_name)
+            newepfolder = os.path.join(seasonpath,ep_name)
+            # print 'This is the newepfolder in addEpisodes : {}'.format(newepfolder)
             newoverview = os.path.join(newepfolder,"overview.txt")
 
             try:
