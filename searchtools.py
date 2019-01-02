@@ -391,7 +391,7 @@ class searchtools(object):
         # print repr(folderloc)
         # print repr(os.path.normpath(folderloc))
         os.mkdir(folderloc)
-        # os.mkdir(os.path.normpath(folderloc+"/Content"))
+        os.mkdir(os.path.join(folderloc,"Content"))
 
 
 
@@ -539,7 +539,7 @@ class searchtools(object):
 
        
         response = search.tv(query=show) if searchtools.isShow is True else search.movie(query=show)
-        showpath = (os.path.normpath(self.showsfolder+show+"/")) if searchtools.isShow is True else (os.path.normpath(self.moviesfolder+show+"/"))
+        showpath = (os.path.join(self.showsfolder,show)) if searchtools.isShow is True else (os.path.join(self.moviesfolder,show))
 
         posterBase = 'https://image.tmdb.org/t/p/w500'
         if len(search.results) > 0:
@@ -555,6 +555,10 @@ class searchtools(object):
             listforJson.append(["locally_made",False])
 
             jsontext = self.jsonFormat(listforJson)
+            directory = os.path.join(showpath,"details.json")
+            print 'This is the current showpath: {}'.format(showpath)
+            print 'This is the projected JSON dir: {}'.format(directory)
+
             with open(os.path.join(showpath,"details.json"),"w") as f:
                 sometext = json.dumps(jsontext,indent=4)
                 f.write(sometext)
@@ -572,7 +576,7 @@ class searchtools(object):
             posterLink = posterBase + topresult["poster_path"]
 
             if os.path.isdir(showpath) == True:
-                if os.path.exists(os.path.normpath(showpath+"cover.jpg")) == True:
+                if os.path.exists(os.path.join(showpath,"cover.jpg")) == True:
                     print '\'%s\' already has a picture' %(show)
 
                 else:
@@ -580,7 +584,7 @@ class searchtools(object):
                     context = ssl._create_unverified_context()
                     imgDownload = urllib2.urlopen(posterLink, context=context)
 
-                    imgfile = open(os.path.normpath(showpath+"cover.jpg"),'wb')
+                    imgfile = open(os.path.join(showpath,"cover.jpg"),'wb')
                     imgfile.write(imgDownload.read())
                     imgfile.close()
                     if searchtools.isShow is False: print '[+] %s retreived' %(show)
@@ -597,7 +601,7 @@ class searchtools(object):
                         seasonnum = json_data['number_of_seasons']
                         for y in range(1,seasonnum+1):
                             newSeason = "Season {}".format(y)
-                            seasonpath = showpath+"Content/"+newSeason
+                            seasonpath = os.path.join(showpath,"Content",newSeason)
                             os.mkdir(os.path.normpath(seasonpath))
                             self.addEpisodes(topresult["id"],seasonpath,y)
 
@@ -637,8 +641,8 @@ class searchtools(object):
             ep_name = epdetails[x][0]
             ep_over = epdetails[x][1]
 
-            newepfolder = os.path.normpath(seasonpath+"/"+ep_name)
-            newoverview = os.path.normpath(newepfolder+"/overview.txt")
+            newepfolder = os.path.join(seasonpath,os.sep,ep_name)
+            newoverview = os.path.join(newepfolder,"overview.txt")
 
             try:
                 os.mkdir(newepfolder)
