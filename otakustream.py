@@ -25,30 +25,41 @@ def otakuLink(original_name):
 
     else:
         return None
-def chooseDownload(link):
-    pass
-    # Go through the HTML 
 
-def videoLink(show_link,ep_number):
-    base_url = 'http://www.otakustream.tv/user/'
+def chooseDownload(download_page_link):
+    
+    result = requests.get(download_page_link)
+    page = result.text
+    soup = BeautifulSoup(page,'html.parser')
+    server_links = soup.find_all('table', class_="table table-striped table-hover")
+    print server_links
+
+    
+def otakuDownloadPage(show_link,ep_number):
     ep_string = "episode-{}/".format(str(ep_number))
-    # print ep_string
     base_url = show_link + ep_string
 
     result = requests.get(base_url)
     page = result.text
 
     soup = BeautifulSoup(page,'html.parser')
-#     print soup
+
     download_links = soup.find_all('a', title="Download episode")
     downloadlink = download_links[0]['href']
+    base_url = 'http://www.otakustream.tv/user'
+    final_url = base_url+downloadlink
     
-    return base_url+downloadlink
-    
- 
+    # print 'This is the final url: {}'.format(final_url)
+    webbrowser.open(final_url)
+    return final_url
 
 
 
 
+def main():
+    show_link = otakuLink("Your lie in april")
+    server_links = otakuDownloadPage(show_link,5)
+    chooseDownload(server_links)
 
-print videoLink(otakuLink("megalo box"),5)
+
+main()
