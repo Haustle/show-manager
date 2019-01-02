@@ -13,7 +13,7 @@ def otakuLink(original_name):
     soup = BeautifulSoup(page,'html.parser')
     
     shows = soup.find_all('div', class_="caption-category")
-    link_to_show = ""
+    link_to_show = None
     if len(shows) > 0:
         for show in shows:
             links = show.find_all('a', href=True)
@@ -22,11 +22,15 @@ def otakuLink(original_name):
             print "\'{}\' was found on otakustream.tv".format(original_name)
             return link_to_show
 
+
     else:
-        
         return None
+def chooseDownload(link):
+    pass
+    # Go through the HTML 
 
 def videoLink(show_link,ep_number):
+    base_url = 'http://www.otakustream.tv/user/'
     ep_string = "episode-{}/".format(str(ep_number))
     # print ep_string
     base_url = show_link + ep_string
@@ -36,12 +40,15 @@ def videoLink(show_link,ep_number):
 
     soup = BeautifulSoup(page,'html.parser')
 #     print soup
-    idk = soup.find_all('div', id="video-wrap")
-    print idk
+    download_links = soup.find_all('a', title="Download episode")
+    downloadlink = download_links[0]['href']
+    
+    return base_url+downloadlink
+    
  
 
 
 
 
 
-videoLink(otakuLink("megalo box"),5)
+print videoLink(otakuLink("megalo box"),5)
