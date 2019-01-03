@@ -4,6 +4,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from logger import Logger
 
+# from otakustream import show
 import otakustream
 
 
@@ -525,11 +526,11 @@ class searchtools(object):
         if len(search.results) > 0:
             topresult = search.results[0]
            
-
+            release_date = (topresult["first_air_date"] if searchtools.isShow else topresult["release_date"])
             listforJson = []
             listforJson.append(["overview",topresult['overview']])
             listforJson.append(["poster_path",topresult["poster_path"]])
-            listforJson.append(["release_date", (topresult["first_air_date"] if searchtools.isShow else topresult["release_date"])])
+            listforJson.append(["release_date", release_date])
             listforJson.append(["language",topresult["original_language"]])
             listforJson.append(["id",topresult['id']])
             listforJson.append(["locally_made",False])
@@ -583,7 +584,7 @@ class searchtools(object):
                             newSeason = "Season {}".format(y)
                             seasonpath = os.path.join(showpath,"Content",newSeason)
                             os.mkdir(os.path.normpath(seasonpath))
-                            self.addEpisodes(show,topresult["id"],seasonpath,y)
+                            self.addEpisodes(show,topresult["id"],seasonpath,y,release_date)
 
                             
 
@@ -613,14 +614,16 @@ class searchtools(object):
                 print '%s path doesn\'t exist' %(show)
        
     # FUNCTION CALLED CREATE DIRECTORIES OF EACH EPISODE IN EPISODELIST FUNCTION
-    def addEpisodes(self,show,show_id,seasonpath,seasonNum):
-        
+    def addEpisodes(self,show,show_id,seasonpath,seasonNum,release_date):
         logger = Logger()
+
+        release_date = (release_date.split('-'))[0]
         epdetails = self.episodeList(seasonNum,show_id,losteps=False)
 
         options = Options()
         options.headless = False
         options.add_extension('C:\Users\haust\Desktop\uBlock-Origin_v1.17.4.crx')
+        
         driver = webdriver.Chrome('F:\Program Files (x86)\Google\Chrome\Application\chromedriver',chrome_options=options)
 
         # SIGNING INTO OTAKU STREAM
@@ -629,32 +632,34 @@ class searchtools(object):
         driver.find_element_by_id("user_pass").send_keys(config.otaku_pass)
         driver.find_element_by_id("wp-submit").click()
 
+        otaku_results = otakustream.otakuLink(show + " {}".format(release_date))
+        if otaku_results is not None:
 
-        for x in range(len(epdetails)):
-            
-            ep_name = epdetails[x][0]
-            ep_name = self.replacingSlashes(ep_name)
+            for x in range(len(epdetails)):
+                
+                ep_name = epdetails[x][0]
+                ep_name = self.replacingSlashes(ep_name)
 
-            ep_over = epdetails[x][1]
-            ep_link = otakustream.main(driver,show,x+1)
+                ep_over = epdetails[x][1]
+                ep_link = otakustream.main(driver,show,x+1,otaku_results)
 
 
 
-            newepfolder = os.path.join(seasonpath,ep_name)
-            newoverview = os.path.join(newepfolder,"overview.txt")
-            neweplink = os.path.join(newepfolder,"WATCH.bat")
+                newepfolder = os.path.join(seasonpath,ep_name)
+                newoverview = os.path.join(newepfolder,"overview.txt")
+                neweplink = os.path.join(newepfolder,"WATCH.bat")
 
-            try:
-                os.mkdir(newepfolder)
-                logger.writeLog(neweplink,message=ep_link,overview=True)
-                logger.writeLog(newoverview,message=ep_over,overview=True)
+                try:
+                    os.mkdir(newepfolder)
+                    logger.writeLog(neweplink,message=ep_link,overview=True)
+                    logger.writeLog(newoverview,message=ep_over,overview=True)
 
-            except:
-                LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(ep_name, newepfolder)
-                print LOG_MESSAGE
-                logger.writeLog(showlogfile,message=LOG_MESSAGE)
-                continue
-        driver.close()
+                except:
+                    LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(ep_name, newepfolder)
+                    print LOG_MESSAGE
+                    logger.writeLog(showlogfile,message=LOG_MESSAGE)
+                    continue
+            driver.close()
 
     def replacingSlashes(self,name):
         try:

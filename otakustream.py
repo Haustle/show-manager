@@ -24,6 +24,9 @@ def otakuLink(original_name):
     shows = soup.find_all('div', class_="caption-category")
     link_to_show = None
     if len(shows) > 0:
+
+        # 
+
         for show in shows:
             links = show.find_all('a', href=True)
             link_to_show = links[0]['href']
@@ -37,19 +40,16 @@ def otakuLink(original_name):
 
 def chooseDownload(driver,download_page_link):
 
-    # print "This is download_page_link: {}".format(download_page_link)
-    # print "This is the format of driver in choose download: {}".format(type(driver)) 
-    # time.sleep(1)
 
-    print "Session_id in choose download: {}".format(driver.session_id)
-    print "_url from driver object in chosoedonw: {}".format(driver.command_executor._url)
+
+    # time.sleep(1)
+    # print "\nThis is the download_page_link: {}\n".format(download_page_link)
     driver.get(download_page_link)
-
-    # time.sleep(1)
-
     page = (driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")).encode("utf-8")
     soup = BeautifulSoup(page,'html.parser')
+    # print "This is the start of soup: {}".format(soup)
     server_links = soup.find_all('table', class_="table table-striped table-hover")
+    # print "This is the list to server_links: {}".format(server_links)
     tds = server_links[0].find_all("td")
     link = None
     for x in range (len(tds)):
@@ -97,29 +97,22 @@ def otakuDownloadPage(show_link,ep_number):
     
     return final_url
 
-def selenium_try():
-   pass
 
-
-def main(driver_import,anime_name,ep_num):
-    # chrome_options.add_extension('C:\Users\haust\Desktop\uBlock-Origin_v1.17.4.crx')
-    # chrome_options.headless = False
+def main(driver_import,anime_name,ep_num,show_link):
     
-    # driver = webdriver.Chrome('F:\Program Files (x86)\Google\Chrome\Application\chromedriver', chrome_options=chrome_options)
-    driver = driver_import
-    # print "This is the format of driver in main: {}".format(type(driver))
-    print "_url from driver object in main: {}".format(driver.command_executor._url)
-    print "This is the session_id: {}".format(driver.session_id)
+    driver = driver_import # import this into searchtools and run it before hand
 
-    show_link = otakuLink(anime_name)
+
+
+    
 
     if show_link is not None:
         server_links = otakuDownloadPage(show_link,ep_num)
+        time.sleep(1)
         openloadLink = chooseDownload(driver,server_links)
-
+        time.sleep(1)
         mp4 = openloadMP4(driver,openloadLink)
         bat_file = None
-
         vlc_dir = 'C:\Program Files\VideoLAN\VLC'
         if os.path.isdir(vlc_dir) == False:
             vlc_dir = 'C:\Program Files (x86)\VideoLAN\VLC'
