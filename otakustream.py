@@ -11,7 +11,19 @@ driver = None
 global chrome_options 
 chrome_options = None
 
-def otakuLink(original_name):
+
+
+
+
+# NEED TO GO BACK AND SCAREP FOR SPAN > EP-NO
+# NEED TO CHECK FOR THE RELEASE DATE OF EACH SEASON
+# SO I CAN SEARCH
+#   
+
+
+
+def otakuLink(original_name,tmdb_season_ep_count,release_date):
+    tmdb_season_ep_count = int(tmdb_season_ep_count)
 
     name = "+".join(original_name.split(" "))
     base_url = "https://www.otakustream.tv/?s={}".format(name)
@@ -21,22 +33,35 @@ def otakuLink(original_name):
     soup = BeautifulSoup(page,'html.parser')
     
     
-    shows = soup.find_all('div', class_="caption-category")
+    shows = soup.find_all('div', class_="ep-box")
     link_to_show = None
     if len(shows) > 0:
+        for x in range(len(shows)):
+            ep_count = shows[x].find_all('span', class_="ep-no")
+            if len(ep_count) == 1:
+                ep_count = ((ep_count[0].text).split(" "))[-1]
+                if ep_count.isdigit():
+                    if (int(ep_count) == (tmdb_season_ep_count)) or ((int(ep_count)+1) == tmdb_season_ep_count) or ((int(ep_count)-1) == tmdb_season_ep_count):
+                        links = shows[x].find_all('a', href=True)
+                        link_to_show = links[0]['href']
+                        print link_to_show
+                        premierbox = shows[x].find_all('div', class_= "cch-content")
+                        for y in range(len(premierbox)):
+                            ps = premierbox[y].find_all('p', class_= None)
+                            for p in ps:
+                                allATagss = p.find_all('a', class_= None)
+                                for x in range(len(allATagss)):
+                                    if (allATagss[x].text) == str(release_date):
+                                        print "\'{}\' was found on otakustream.tv".format(original_name)
+                                        return link_to_show
 
-        # 
-
-        for show in shows:
-            links = show.find_all('a', href=True)
-            link_to_show = links[0]['href']
-            
-            print "\'{}\' was found on otakustream.tv".format(original_name)
-            return link_to_show
 
 
-    else:
-        return None
+
+                    
+                                
+            if (x+1) != len(shows): continue
+    return link_to_show
 
 def chooseDownload(driver,download_page_link):
 
@@ -62,7 +87,6 @@ def chooseDownload(driver,download_page_link):
 
 def openloadMP4(driver,link):
     if link is not None:
-      
         driver.get(link)
         for x in range(3):
             # print 'This is run through number: {}'.format(x)
@@ -74,15 +98,17 @@ def openloadMP4(driver,link):
                 # print 'The click failed'
             finally:
                 time.sleep(1)
-
-        page = (driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")).encode("utf-8")
-        soup = BeautifulSoup(page,'html.parser')
-        instantlink = soup.find_all('video', class_="vjs-tech")
-        # driver.close()
-        mp4Link = instantlink[0]['src']
-        link = 'https://openload.co{}'.format(mp4Link)
-
-    return link
+        try:
+            page = (driver.execute_script("return document.getElementsByTagName('html')[0].innerHTML")).encode("utf-8")
+            soup = BeautifulSoup(page,'html.parser')
+            instantlink = soup.find_all('video', class_="vjs-tech")
+            # driver.close()
+            mp4Link = instantlink[0]['src']
+            link = 'https://openload.co{}'.format(mp4Link)
+        except:
+            link = None
+        finally:
+            return link
 
 def otakuDownloadPage(show_link,ep_number):
     ep_string = "episode-{}/".format(str(ep_number))
@@ -112,12 +138,14 @@ def main(driver_import,anime_name,ep_num,show_link):
         openloadLink = chooseDownload(driver,server_links)
         time.sleep(1)
         mp4 = openloadMP4(driver,openloadLink)
-        bat_file = None
-        vlc_dir = 'C:\Program Files\VideoLAN\VLC'
-        if os.path.isdir(vlc_dir) == False:
-            vlc_dir = 'C:\Program Files (x86)\VideoLAN\VLC'
-        bat_file = 'cd {}'.format(vlc_dir)
-        bat_file += "\nvlc.exe {}".format(mp4)
-        
-    return bat_file
+        if mp4 != None:
+            bat_file = None
+            vlc_dir = 'C:\Program Files\VideoLAN\VLC'
+            if os.path.isdir(vlc_dir) == False:
+                vlc_dir = 'C:\Program Files (x86)\VideoLAN\VLC'
+            bat_file = 'cd {}'.format(vlc_dir)
+            bat_file += "\nvlc.exe {}".format(mp4)
+            return bat_file
+            
+    return None
     

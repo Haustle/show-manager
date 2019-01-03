@@ -50,7 +50,7 @@ class authentication(object):
             else:
 
                 if dirList[-1] == dire:
-                    print 'This is the end'
+                    # print 'This is the end'
                     pass
                 else: continue
 

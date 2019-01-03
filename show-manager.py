@@ -52,6 +52,7 @@ while True:
         else:
             '\nThanks for using the program!'
 
+
     elif (command[0] == 's') or (command[0] == 'search'):
 
         filepath =""

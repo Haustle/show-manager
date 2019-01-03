@@ -523,6 +523,8 @@ class searchtools(object):
         showpath = (os.path.join(self.showsfolder,show)) if searchtools.isShow is True else (os.path.join(self.moviesfolder,show))
 
         posterBase = 'https://image.tmdb.org/t/p/w500'
+        start = time.time()
+
         if len(search.results) > 0:
             topresult = search.results[0]
            
@@ -584,12 +586,13 @@ class searchtools(object):
                             newSeason = "Season {}".format(y)
                             seasonpath = os.path.join(showpath,"Content",newSeason)
                             os.mkdir(os.path.normpath(seasonpath))
-                            self.addEpisodes(show,topresult["id"],seasonpath,y,release_date)
+                            self.addEpisodes(show,topresult["id"],seasonpath,y)
 
                             
 
 
-                        print '[+] %s retreived' %(show)
+                        print '\n[+] %s retreived' %(show)
+                        
 
                         currentTime = time.strftime("%c")
                         logString = "%s \t[NEW SHOW] %s (%d seasons)\n" % (currentTime, show, seasonnum)
@@ -608,31 +611,40 @@ class searchtools(object):
 
 
                         logger.writeLog(self.logtxt,message=logString)
-                
+                        
+                    end = time.time()
+                    print 'It took {:0.2f} seconds to add this directory'.format(end-start)
                     
             else:
                 print '%s path doesn\'t exist' %(show)
        
     # FUNCTION CALLED CREATE DIRECTORIES OF EACH EPISODE IN EPISODELIST FUNCTION
-    def addEpisodes(self,show,show_id,seasonpath,seasonNum,release_date):
+    def addEpisodes(self,show,show_id,seasonpath,seasonNum):
+       
         logger = Logger()
 
-        release_date = (release_date.split('-'))[0]
-        epdetails = self.episodeList(seasonNum,show_id,losteps=False)
+        
+        epdetails, season_release_date = self.episodeList(seasonNum,show_id,losteps=False)
+        season_release_date = (season_release_date.split('-'))[0]
 
         options = Options()
+
+        # Cant run chrome headless if you have extensions you want to add
         options.headless = False
         options.add_extension('C:\Users\haust\Desktop\uBlock-Origin_v1.17.4.crx')
         
         driver = webdriver.Chrome('F:\Program Files (x86)\Google\Chrome\Application\chromedriver',chrome_options=options)
+        # driver.set_window_position(-10000,0) # Remove this line if you want to see whats happening
 
         # SIGNING INTO OTAKU STREAM
         driver.get('https://otakustream.tv/user/login/')
         driver.find_element_by_id("user_login").send_keys(config.otaku_login)
         driver.find_element_by_id("user_pass").send_keys(config.otaku_pass)
         driver.find_element_by_id("wp-submit").click()
-
-        otaku_results = otakustream.otakuLink(show + " {}".format(release_date))
+        search = ("{} Season {} {}".format(show,seasonNum,season_release_date)) if seasonNum > 1 else ("{} {}".format(show,season_release_date))
+        print "\n\nThis is the search: {}".format(search)
+        print "There are \'{}\' episodes in Season {}".format(len(epdetails),seasonNum)
+        otaku_results = otakustream.otakuLink(search,len(epdetails),season_release_date)
         if otaku_results is not None:
 
             for x in range(len(epdetails)):
@@ -651,7 +663,7 @@ class searchtools(object):
 
                 try:
                     os.mkdir(newepfolder)
-                    logger.writeLog(neweplink,message=ep_link,overview=True)
+                    if ep_link is not None: logger.writeLog(neweplink,message=ep_link,overview=True)
                     logger.writeLog(newoverview,message=ep_over,overview=True)
 
                 except:
@@ -685,7 +697,10 @@ class searchtools(object):
         eplist = []
         resp = requests.get(url)
         json_data = requests.get(url).json()
+
         
+        season_release_date = json_data["air_date"]
+
         for episode in json_data["episodes"]:
 
             epnum = int(episode["episode_number"])
@@ -699,7 +714,7 @@ class searchtools(object):
             if losteps == False: eplist.append([filename,episode["overview"].encode('utf-8')])
             else: eplist.append(filename)
 
-        return eplist
+        return eplist,season_release_date
 
     # CHECKS A GIVEN LIST TO MAKE SURE THERE ARE NO FILES THAT SHOULDN'T BE THERE
     def forbiddenFiles(self, list_taken):
