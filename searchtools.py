@@ -1,8 +1,10 @@
-import os, re, subprocess, urllib, urllib2, config
+import os, re, subprocess, urllib, urllib2, config, webbrowser, shutil, requests, time, ssl, json
 import tmdbsimple as tmdb
-import webbrowser, shutil, requests, time, ssl, json
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from logger import Logger
-from pprint import pprint
+
+import otakustream
 
 
 
@@ -53,7 +55,7 @@ class searchtools(object):
         detail = data["details"]
         for line in somelist:
             detail[line[0]] = line[1]
-        # pprint(data)
+
         return data
 
     # TURNS A NAME OF A SHOW/MOVIE INTO PROPER TITLE CASE
@@ -375,6 +377,8 @@ class searchtools(object):
     
     # FUNCTION RESPONSIBLE OF CREATING FOLDER DIRECTORY
     def newDir(self,show,local=False):
+        show = self.replacingSlashes(show)
+        # print show
         folderloc = (self.showsfolder) if searchtools.isShow is True else (self.moviesfolder)
         folderloc = os.path.join(folderloc,show)
         os.mkdir(folderloc)
@@ -579,7 +583,7 @@ class searchtools(object):
                             newSeason = "Season {}".format(y)
                             seasonpath = os.path.join(showpath,"Content",newSeason)
                             os.mkdir(os.path.normpath(seasonpath))
-                            self.addEpisodes(topresult["id"],seasonpath,y)
+                            self.addEpisodes(show,topresult["id"],seasonpath,y)
 
                             
 
@@ -609,21 +613,40 @@ class searchtools(object):
                 print '%s path doesn\'t exist' %(show)
        
     # FUNCTION CALLED CREATE DIRECTORIES OF EACH EPISODE IN EPISODELIST FUNCTION
-    def addEpisodes(self,show_id,seasonpath,seasonNum):
-        # print 'This is the season path in addEpisodes: {}'.format(seasonpath)
+    def addEpisodes(self,show,show_id,seasonpath,seasonNum):
+        
         logger = Logger()
         epdetails = self.episodeList(seasonNum,show_id,losteps=False)
-        for x in range(len(epdetails)):
 
+        options = Options()
+        options.headless = False
+        options.add_extension('C:\Users\haust\Desktop\uBlock-Origin_v1.17.4.crx')
+        driver = webdriver.Chrome('F:\Program Files (x86)\Google\Chrome\Application\chromedriver',chrome_options=options)
+
+        # SIGNING INTO OTAKU STREAM
+        driver.get('https://otakustream.tv/user/login/')
+        driver.find_element_by_id("user_login").send_keys(config.otaku_login)
+        driver.find_element_by_id("user_pass").send_keys(config.otaku_pass)
+        driver.find_element_by_id("wp-submit").click()
+
+
+        for x in range(len(epdetails)):
+            
             ep_name = epdetails[x][0]
+            ep_name = self.replacingSlashes(ep_name)
+
             ep_over = epdetails[x][1]
+            ep_link = otakustream.main(driver,show,x+1)
+
+
 
             newepfolder = os.path.join(seasonpath,ep_name)
-            # print 'This is the newepfolder in addEpisodes : {}'.format(newepfolder)
             newoverview = os.path.join(newepfolder,"overview.txt")
+            neweplink = os.path.join(newepfolder,"WATCH.bat")
 
             try:
                 os.mkdir(newepfolder)
+                logger.writeLog(neweplink,message=ep_link,overview=True)
                 logger.writeLog(newoverview,message=ep_over,overview=True)
 
             except:
@@ -631,8 +654,24 @@ class searchtools(object):
                 print LOG_MESSAGE
                 logger.writeLog(showlogfile,message=LOG_MESSAGE)
                 continue
+        driver.close()
 
+    def replacingSlashes(self,name):
+        try:
+            name = list(name)
+            forbid_characters = ['/','\\']
+            other_chara = [">","<","\"","?","*",":"]
 
+            for x in range(len(name)):
+                if name[x] in forbid_characters:
+                    name[x] = "&"
+                elif name[x] in other_chara:
+                    name[x] = ""
+        except:
+            print 'Error changing name'
+        finally:
+            name = "".join(name)
+            return name
     # FUNCTION GOES THROUGH TMDB API TO GET EPISODE NAMES AND RETURNS A LIST OF FORMATTED EPISODE NAMES
     def episodeList(self,seasonNum,show_id,losteps=True):
         api = searchtools.api
