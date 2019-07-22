@@ -22,7 +22,7 @@ chrome_options = None
 
 
 
-def otakuLink(original_name,tmdb_season_ep_count,release_date):
+def otakuLink(original_name,tmdb_season_ep_count,release_date,totalEp):
     tmdb_season_ep_count = int(tmdb_season_ep_count)
 
     name = "+".join(original_name.split(" "))
@@ -35,16 +35,20 @@ def otakuLink(original_name,tmdb_season_ep_count,release_date):
     
     shows = soup.find_all('div', class_="ep-box")
     link_to_show = None
+    all_ep = False
     if len(shows) > 0:
         for x in range(len(shows)):
             ep_count = shows[x].find_all('span', class_="ep-no")
             if len(ep_count) == 1:
                 ep_count = ((ep_count[0].text).split(" "))[-1]
                 if ep_count.isdigit():
-                    if (int(ep_count) == (tmdb_season_ep_count)) or ((int(ep_count)+1) == tmdb_season_ep_count) or ((int(ep_count)-1) == tmdb_season_ep_count):
+                    if ((int(ep_count) == totalEp) or int(ep_count) == (tmdb_season_ep_count)) or ((int(ep_count)+1) == tmdb_season_ep_count) or ((int(ep_count)-1) == tmdb_season_ep_count):
+                        if (int(ep_count) == totalEp): 
+                            all_ep = True
                         links = shows[x].find_all('a', href=True)
                         link_to_show = links[0]['href']
-                        print link_to_show
+
+                        # print (link_to_show)
                         premierbox = shows[x].find_all('div', class_= "cch-content")
                         for y in range(len(premierbox)):
                             ps = premierbox[y].find_all('p', class_= None)
@@ -52,8 +56,10 @@ def otakuLink(original_name,tmdb_season_ep_count,release_date):
                                 allATagss = p.find_all('a', class_= None)
                                 for x in range(len(allATagss)):
                                     if (allATagss[x].text) == str(release_date):
-                                        print "\'{}\' was found on otakustream.tv".format(original_name)
-                                        return link_to_show
+                                        print ("\n\n\'{}\' was found on otakustream.tv".format(original_name))
+                                        
+                                        return link_to_show, all_ep
+
 
 
 
@@ -61,7 +67,9 @@ def otakuLink(original_name,tmdb_season_ep_count,release_date):
                     
                                 
             if (x+1) != len(shows): continue
-    return link_to_show
+                
+    # print("We are returning link: {} \nall_ep: {}".format(link_to_show, all_ep))
+    return link_to_show, all_ep
 
 def chooseDownload(driver,download_page_link):
 
@@ -125,12 +133,9 @@ def otakuDownloadPage(show_link,ep_number):
 
 
 def main(driver_import,anime_name,ep_num,show_link):
+    # print ('We are trying to add the episodes')
     
-    driver = driver_import # import this into searchtools and run it before hand
-
-
-
-    
+    driver = driver_import # import this into searchtools and run it before hand    
 
     if show_link is not None:
         server_links = otakuDownloadPage(show_link,ep_num)

@@ -17,7 +17,7 @@ class authentication(object):
         self.moviesfolder = root_folder+"movies/"
 
     def mainFiles(self):
-        dirList = (searchtools.searchtools(self.root_folder)).__dict__.values()
+        dirList = list((searchtools.searchtools(self.root_folder)).__dict__.values())
         missing = []
         # print 'The number of directories being searched: {}'.format(len(dirList))
         for dire in dirList:
@@ -73,7 +73,7 @@ class authentication(object):
             if extension == 'txt': return True
             return False
         except:
-            print 'Error: Something went wrong trying to identify the directory'
+            print ('Error: Something went wrong trying to identify the directory')
 
 
 
@@ -94,9 +94,9 @@ class authentication(object):
                 path_compare = list( set(pathlist) ^ set(official_path))
                 if len(path_compare) != 0:
                     print("\n{} (missing files)").format(name)
-                    print '-'*80
+                    print ('-'*80)
                     for x in range(1,len(path_compare)+1):
 
                         reason = "MISSING" if path_compare[x-1] not in pathlist else "RANDOM FILE"
-                        print "{:<5} {:<20} {:>50}".format(x,path_compare[x-1],reason)
+                        print ("{:<5} {:<20} {:>50}").format(x,path_compare[x-1],reason)
                     
