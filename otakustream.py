@@ -56,7 +56,7 @@ def otakuLink(original_name,tmdb_season_ep_count,release_date,totalEp):
                                 allATagss = p.find_all('a', class_= None)
                                 for x in range(len(allATagss)):
                                     if (allATagss[x].text) == str(release_date):
-                                        print ("\n\n\'{}\' was found on otakustream.tv".format(original_name))
+                                        # print ("\n\n\'{}\' was found on otakustream.tv".format(original_name))
                                         
                                         return link_to_show, all_ep
 

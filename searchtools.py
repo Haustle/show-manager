@@ -623,6 +623,11 @@ class searchtools(object):
         options = Options()
         # Cant run chrome headless if you have extensions you want to add
         options.headless = True
+
+        # THIS WILL DISABLE GOOGLE CHROME LOG MESSAGES
+        # FATAL
+        options.add_argument("--log-level=3")
+        options.add_argument('--disable-extensions')
         # options.add_extension(r"C:\Users\haust\Desktop\uBlock-Origin_v1.17.4.crx")
         driver = webdriver.Chrome(r"F:\Program Files (x86)\Google\Chrome\Application\chromedriver",chrome_options=options)
             
@@ -635,7 +640,7 @@ class searchtools(object):
             # driver.find_element_by_id("wp-submit").click()
             # find_all = False
         totalEp = self.totalNumOfEpisodes(show_id,total_seasons)
-        print ("This is the total number of episodes: {}".format(totalEp))
+        # print ("This is the total number of episodes: {}".format(totalEp))
 
 
 
@@ -651,25 +656,60 @@ class searchtools(object):
 
         otaku_results,find_all = otakustream.otakuLink(search,len(epdetails),season_release_date, totalEp)
 
-
+        episodes_added = 0
         if (find_all == True):
-            print("\n\nThis is the search: {}".format(search))
+            # print("\n\nThis is the search: {}".format(search))
             # print ('THIS IS THE FIRST LOOP')
-            count = 1
+            print("\nScraping and searching for episodes...")
+            
+            count = 0
             for x in range(1,total_seasons+1):
                 newSeason = "Season {}".format(x)
                 seasonpath = os.path.join(showpath,"Content",newSeason)
                 os.mkdir(os.path.normpath(seasonpath))
                 epdetails,season_release_date = self.episodeList(x,show_id,losteps=False)
-                print("\nThere are {} episodes in Season {}".format(len(epdetails), x))
+                # print("\nThere are {} episodes in Season {}".format(len(epdetails), x))
                 for z in range(len(epdetails)):
-                    base_episode_url = "{}episode-{}".format(otaku_results,count)
-                    print("This is the episode url: {}".format(base_episode_url))
                     count+=1
+                    base_episode_url = "{}episode-{}".format(otaku_results,count)
+                    # print("This is the episode url: {}".format(base_episode_url))
+                    ep_name = epdetails[z][0]
+                    ep_name = self.replacingSlashes(ep_name)
+                    ep_over = (epdetails[z][1]).decode('UTF-8')
+                    # ep_link = otakustream.main(driver,show,x+1,otaku_results)
+
+                    listforJson = []
+                    listforJson.append(["url",base_episode_url])
+                    listforJson.append(["ep_name",ep_name])
+                    listforJson.append(["ep_overview",ep_over])
+
+                    jsontext = self.jsonFormat(listforJson)
+
+                    newepfolder = os.path.join(seasonpath,ep_name)
+                    # newoverview = os.path.join(newepfolder,"overview.txt")
+                    # neweplink = os.path.join(newepfolder,"WATCH.bat")
+
+                    try:
+                        os.mkdir(newepfolder)
+                        # THIS LINE IS FOR SAVING THE LINK IN BAT FILE 
+                        # if ep_link is not None: logger.writeLog(neweplink,message=ep_link,overview=True)
+                        # logger.writeLog(newoverview,message=ep_over,overview=True)
+
+                        with open(os.path.join(newepfolder,"ep_details.json"),"w") as f:
+                            sometext = json.dumps(jsontext,indent=4)
+                            f.write(sometext)
+                            f.close()
+                        episodes_added+=1
+
+                    except:
+                        LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(ep_name, newepfolder)
+                        logger.writeLog(showlogfile,message=LOG_MESSAGE)
+                        continue
+                    
 
         else:
             # print ('THIS IS THE SECOND LOOP')
-            
+            print("\nScraping and searching for episodes...")
             for x in range(1,total_seasons+1):
                 # Pulls the episode name and overview
                 epdetails,season_release_date = self.episodeList(x,show_id,losteps=False)
@@ -679,11 +719,10 @@ class searchtools(object):
                     search = "{} {}".format(show, season_release_date)
                 else:
                     search = "{} Season {} {}".format(show,x,season_release_date)
-                # print("\n\nThis is the search: {}".format(search))
-                # print ("THIS IS BEFORE OTAKU LINK")
+
                 otaku_results,find_all2 = otakustream.otakuLink(search,len(epdetails),season_release_date, totalEp)
 
-                print ("This is otaku_results: {}".format(otaku_results))
+                # print ("This is otaku_results: {}".format(otaku_results))
                 if otaku_results is not None:
 
                     newSeason = "Season {}".format(x)
@@ -691,30 +730,41 @@ class searchtools(object):
                     os.mkdir(os.path.normpath(seasonpath))
                     for z in range(len(epdetails)):
                         base_episode_url = "{}episode-{}".format(otaku_results,z+1)
-                        print("This is the episode url: {}".format(base_episode_url))
+                        # print("This is the episode url: {}".format(base_episode_url))
                         ep_name = epdetails[z][0]
                         ep_name = self.replacingSlashes(ep_name)
                         ep_over = (epdetails[z][1]).decode('UTF-8')
                         # ep_link = otakustream.main(driver,show,x+1,otaku_results)
 
-                        
+                        listforJson = []
+                        listforJson.append(["url",base_episode_url])
+                        listforJson.append(["ep_name",ep_name])
+                        listforJson.append(["ep_overview",ep_over])
+
+                        jsontext = self.jsonFormat(listforJson)
 
                         newepfolder = os.path.join(seasonpath,ep_name)
-                        newoverview = os.path.join(newepfolder,"overview.txt")
+                        # newoverview = os.path.join(newepfolder,"overview.txt")
                         # neweplink = os.path.join(newepfolder,"WATCH.bat")
 
                         try:
                             os.mkdir(newepfolder)
                             # THIS LINE IS FOR SAVING THE LINK IN BAT FILE 
                             # if ep_link is not None: logger.writeLog(neweplink,message=ep_link,overview=True)
-                            logger.writeLog(newoverview,message=ep_over,overview=True)
+                            # logger.writeLog(newoverview,message=ep_over,overview=True)
+
+                            with open(os.path.join(newepfolder,"ep_details.json"),"w") as f:
+                                sometext = json.dumps(jsontext,indent=4)
+                                f.write(sometext)
+                                f.close()
+                            episodes_added+=1
 
                         except:
                             LOG_MESSAGE = "\n\nError: Adding \'{}\' \nSUPPOSED FILEPATH: \'{}".format(ep_name, newepfolder)
                             logger.writeLog(showlogfile,message=LOG_MESSAGE)
                             continue
                
-                    
+        print("We added {} of {} for \'{}\'".format(episodes_added,totalEp,show))
         driver.close()
 
 
